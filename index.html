@@ -6,6 +6,8 @@
     <title>商品贩售海报生成器 - Anime Merch Poster Maker</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js">
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js">
+    </script>
     <style>
         :root {
             --poster-bg: #ffffff;
@@ -31,6 +33,8 @@
             --font-body: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
             --font-price: 'Georgia', 'Noto Serif SC', serif;
             --image-area-bg: #eaeaea;
+            --card-ratio: 1;
+            --card-border-radius: 8px;
         }
 
         * {
@@ -59,67 +63,67 @@
             z-index: 100;
             background: #ffffff;
             border-radius: 16px;
-            padding: 16px 20px;
-            margin-bottom: 16px;
+            padding: 12px 18px;
+            margin-bottom: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
-            max-width: 1300px;
+            max-width: 1400px;
             width: 100%;
             border: 1px solid #e0e0e0;
         }
         .toolbar-group {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             flex-shrink: 0;
         }
         .toolbar-group label {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             color: #444;
             white-space: nowrap;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
         .toolbar-group select,
         .toolbar-group input[type="range"] {
             cursor: pointer;
         }
         .toolbar-group input[type="range"] {
-            width: 80px;
+            width: 70px;
             accent-color: #444;
         }
         .toolbar-group input[type="color"] {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border: 2px solid #ddd;
-            border-radius: 6px;
+            border-radius: 5px;
             cursor: pointer;
-            padding: 2px;
+            padding: 1px;
             background: #fff;
         }
         .toolbar-divider {
             width: 1px;
-            height: 28px;
+            height: 24px;
             background: #ddd;
             flex-shrink: 0;
-            margin: 0 4px;
+            margin: 0 2px;
         }
         .btn {
-            padding: 8px 16px;
-            border-radius: 8px;
+            padding: 7px 14px;
+            border-radius: 7px;
             border: none;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             letter-spacing: 0.5px;
             transition: all 0.2s;
             white-space: nowrap;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
         .btn:active {
             transform: scale(0.95);
@@ -135,7 +139,7 @@
         .btn-outline {
             background: #fff;
             color: #333;
-            border: 2px solid #ccc;
+            border: 1.5px solid #ccc;
         }
         .btn-outline:hover {
             border-color: #888;
@@ -144,7 +148,9 @@
         .btn-bg-upload {
             background: #fff;
             color: #6c5ce7;
-            border: 2px solid #a29bfe;
+            border: 1.5px solid #a29bfe;
+            font-size: 11px;
+            padding: 6px 10px;
         }
         .btn-bg-upload:hover {
             background: #f8f7ff;
@@ -158,9 +164,9 @@
         .btn-bg-clear {
             background: #fff;
             color: #e74c3c;
-            border: 2px solid #fab1a0;
-            font-size: 11px;
-            padding: 6px 10px;
+            border: 1.5px solid #fab1a0;
+            font-size: 10px;
+            padding: 5px 8px;
         }
         .btn-bg-clear:hover {
             background: #fff5f5;
@@ -169,34 +175,29 @@
         .btn-export {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: #fff;
-            font-size: 14px;
-            padding: 10px 20px;
-            border-radius: 10px;
+            font-size: 13px;
+            padding: 9px 16px;
+            border-radius: 9px;
             font-weight: 700;
-            letter-spacing: 1px;
-            animation: pulse-export 2.5s ease-in-out infinite;
-        }
-        @keyframes pulse-export {
-            0%,
-            100% {
-                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.5);
-            }
-            50% {
-                box-shadow: 0 0 0 14px rgba(102, 126, 234, 0);
-            }
+            letter-spacing: 0.5px;
         }
         .btn-export:hover {
-            animation: none;
             box-shadow: 0 6px 24px rgba(102, 126, 234, 0.45);
             transform: translateY(-2px);
         }
+        .btn-export-jpg {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        .btn-export-png {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+        }
         .btn-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            border: 2px solid #ddd;
+            width: 32px;
+            height: 32px;
+            border-radius: 7px;
+            border: 1.5px solid #ddd;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -219,25 +220,41 @@
         }
         .range-value {
             display: inline-block;
-            min-width: 28px;
-            text-align: center;
-            font-weight: 700;
-            font-size: 13px;
-            color: #333;
-            background: #f5f5f5;
-            border-radius: 4px;
-            padding: 2px 6px;
-        }
-        .opacity-value {
-            display: inline-block;
-            min-width: 32px;
+            min-width: 24px;
             text-align: center;
             font-weight: 700;
             font-size: 12px;
+            color: #333;
+            background: #f5f5f5;
+            border-radius: 4px;
+            padding: 1px 5px;
+        }
+        .opacity-value {
+            display: inline-block;
+            min-width: 28px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 11px;
             color: #6c5ce7;
             background: #f8f7ff;
             border-radius: 4px;
-            padding: 2px 6px;
+            padding: 1px 5px;
+        }
+        .btn-qr {
+            background: #fff;
+            color: #2d3436;
+            border: 1.5px solid #636e72;
+            font-size: 11px;
+            padding: 6px 10px;
+        }
+        .btn-qr:hover {
+            background: #f5f6fa;
+            border-color: #2d3436;
+        }
+        .btn-qr.has-qr {
+            background: #dfe6e9;
+            border-color: #2d3436;
+            font-weight: 700;
         }
 
         /* ========== 主海报区域 ========== */
@@ -363,6 +380,43 @@
             background: rgba(128, 128, 128, 0.08);
         }
 
+        /* ========== QR 码区域 ========== */
+        .poster-qr-area {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .poster-qr-area .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .poster-qr-area .qr-container canvas,
+        .poster-qr-area .qr-container img {
+            width: 80px !important;
+            height: 80px !important;
+            border-radius: 4px;
+        }
+        .poster-qr-area .qr-label {
+            font-size: 9px;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 1px 6px;
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+        .poster-qr-area .qr-label:hover {
+            background: rgba(128, 128, 128, 0.08);
+        }
+
         /* ========== 商品网格 ========== */
         .products-grid {
             display: grid;
@@ -375,7 +429,7 @@
         .product-card {
             background: var(--card-bg);
             border: var(--card-border, 2px solid var(--accent));
-            border-radius: var(--card-radius);
+            border-radius: var(--card-border-radius);
             box-shadow: var(--card-shadow);
             overflow: hidden;
             transition: all 0.3s ease;
@@ -412,7 +466,7 @@
 
         .card-image-area {
             width: 100%;
-            aspect-ratio: 1 / 1;
+            aspect-ratio: var(--card-ratio);
             background-color: var(--image-area-bg);
             position: relative;
             cursor: pointer;
@@ -455,11 +509,11 @@
         }
 
         .card-info {
-            padding: 12px 14px;
+            padding: 10px 14px;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
         }
         .card-name {
             font-weight: 700;
@@ -477,6 +531,33 @@
         .card-name:hover {
             background: rgba(128, 128, 128, 0.1);
         }
+        .card-description {
+            font-size: 11px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 2px 6px;
+            margin: -2px -6px;
+            border-radius: 3px;
+            transition: background 0.2s;
+            line-height: 1.35;
+            word-break: break-word;
+            font-family: var(--font-body);
+            opacity: 0.8;
+        }
+        .card-description:hover {
+            background: rgba(128, 128, 128, 0.06);
+            opacity: 1;
+        }
+        .card-description.empty-desc {
+            color: #bbb;
+            font-style: italic;
+            opacity: 0.5;
+            border: 1px dashed transparent;
+        }
+        .card-description.empty-desc:hover {
+            border-color: #ccc;
+            opacity: 0.8;
+        }
         .card-price {
             font-weight: 700;
             font-size: 18px;
@@ -492,6 +573,12 @@
         .card-price:hover {
             background: rgba(200, 50, 50, 0.08);
         }
+        .card-tags-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            align-items: center;
+        }
         .card-tag {
             display: inline-block;
             background: var(--tag-bg);
@@ -501,11 +588,11 @@
             border-radius: 10px;
             letter-spacing: 1px;
             font-weight: 600;
-            align-self: flex-start;
             cursor: pointer;
             transition: all 0.2s;
             position: relative;
             border: 1px solid var(--accent);
+            white-space: nowrap;
         }
         .card-tag:hover {
             background: var(--accent);
@@ -521,6 +608,19 @@
         }
         .card-tag:hover::after {
             opacity: 0.7;
+        }
+        .card-tag.placeholder-tag {
+            background: transparent;
+            color: #aaa;
+            border: 1px dashed #ccc;
+            cursor: pointer;
+        }
+        .card-tag.placeholder-tag:hover {
+            background: transparent;
+            color: #555;
+            border-color: #999;
+            transform: scale(1.05);
+            box-shadow: none;
         }
         .card-badge {
             position: absolute;
@@ -557,18 +657,18 @@
             top: 6px;
             right: 6px;
             display: flex;
-            gap: 4px;
+            gap: 3px;
             opacity: 0;
             transition: opacity 0.25s;
             z-index: 10;
         }
         .card-actions button {
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
             border: none;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -598,11 +698,11 @@
             transform: scale(1.1);
         }
 
-        /* ========== 添加按钮(海报内) ========== */
+        /* ========== 添加按钮 ========== */
         .add-card-placeholder {
             border: 2px dashed var(--accent);
-            border-radius: var(--card-radius);
-            min-height: 180px;
+            border-radius: var(--card-border-radius);
+            min-height: 160px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -636,7 +736,7 @@
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
             transform: rotate(2deg) scale(1.04);
             transition: none;
-            border-radius: var(--card-radius);
+            border-radius: var(--card-border-radius);
             overflow: hidden;
         }
 
@@ -688,6 +788,8 @@
             max-width: 520px;
             width: 90%;
             animation: slideUp 0.25s ease;
+            max-height: 85vh;
+            overflow-y: auto;
         }
         @keyframes slideUp {
             from {
@@ -708,22 +810,23 @@
         .modal-dialog p {
             font-size: 14px;
             color: #555;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             line-height: 1.6;
         }
-        .modal-dialog textarea {
+        .modal-dialog textarea,
+        .modal-dialog input[type="text"] {
             width: 100%;
-            height: 180px;
             border: 2px solid #ddd;
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px 12px;
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 13px;
             resize: vertical;
             outline: none;
             transition: border-color 0.2s;
         }
-        .modal-dialog textarea:focus {
+        .modal-dialog textarea:focus,
+        .modal-dialog input[type="text"]:focus {
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
         }
@@ -740,7 +843,7 @@
         .hint-text {
             font-size: 12px;
             color: #999;
-            margin-top: 6px;
+            margin-top: 4px;
             line-height: 1.5;
         }
 
@@ -771,26 +874,62 @@
             transform: translateX(-50%) translateY(-20px);
         }
 
+        /* ========== 打印样式 ========== */
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+                margin: 0;
+            }
+            .toolbar,
+            .toast,
+            .modal-overlay,
+            .card-actions,
+            .add-card-placeholder {
+                display: none !important;
+            }
+            .poster-wrapper {
+                max-width: 100%;
+            }
+            .poster-container {
+                box-shadow: none;
+                border-radius: 0;
+                max-width: 100%;
+                width: 100%;
+                padding: 16px 20px 12px;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            .product-card:hover {
+                transform: none;
+                box-shadow: var(--card-shadow);
+            }
+            @page {
+                margin: 4mm;
+                size: auto;
+            }
+        }
+
         /* ========== 响应式 ========== */
         @media (max-width: 768px) {
             .toolbar {
-                padding: 10px;
-                gap: 6px;
+                padding: 8px 10px;
+                gap: 5px;
                 border-radius: 10px;
             }
             .toolbar-group label {
-                font-size: 11px;
+                font-size: 10px;
             }
             .btn {
-                padding: 6px 10px;
+                padding: 5px 9px;
                 font-size: 11px;
                 border-radius: 6px;
             }
             .btn-icon {
-                width: 30px;
-                height: 30px;
-                font-size: 14px;
-                border-radius: 6px;
+                width: 28px;
+                height: 28px;
+                font-size: 13px;
+                border-radius: 5px;
             }
             .poster-container {
                 padding: 16px 10px 12px;
@@ -815,13 +954,18 @@
                 opacity: 1;
             }
             .card-actions button {
-                width: 24px;
-                height: 24px;
-                font-size: 11px;
+                width: 22px;
+                height: 22px;
+                font-size: 10px;
             }
             .modal-dialog {
                 padding: 16px 18px;
                 border-radius: 10px;
+            }
+            .poster-qr-area .qr-container canvas,
+            .poster-qr-area .qr-container img {
+                width: 60px !important;
+                height: 60px !important;
             }
         }
     </style>
@@ -836,16 +980,40 @@
         <!-- 模板选择 -->
         <div class="toolbar-group">
             <label>🎨 模板</label>
-            <select id="templateSelect" style="padding:6px 10px;border-radius:6px;border:2px solid #ddd;font-size:13px;font-weight:600;">
-                <option value="monochrome">⬛ 黑白灰简约</option>
-                <option value="sakura">🌸 樱花梦幻</option>
-                <option value="starry">✨ 星空幻想</option>
-                <option value="mint">🌿 薄荷清风</option>
-                <option value="mizuiro">💧 水色配色</option>
-                <option value="gothic">🦇 暗夜哥特</option>
-                <option value="cyber">💜 赛博霓虹</option>
+            <select id="templateSelect" style="padding:5px 8px;border-radius:5px;border:1.5px solid #ddd;font-size:12px;font-weight:600;">
+                <option value="monochrome">⬛ 黑白灰</option>
+                <option value="sakura">🌸 樱花</option>
+                <option value="starry">✨ 星空</option>
+                <option value="mint">🌿 薄荷</option>
+                <option value="mizuiro">💧 水色</option>
+                <option value="gothic">🦇 哥特</option>
+                <option value="cyber">💜 霓虹</option>
             </select>
-            <button class="btn btn-outline" id="btnSaveTemplate" onclick="saveCustomTemplate()" title="保存当前配色为自定义模板" style="font-size:11px;padding:6px 10px;">💾</button>
+            <button class="btn btn-outline" id="btnSaveTemplate" onclick="saveCustomTemplate()" title="保存当前配色为自定义模板" style="font-size:10px;padding:5px 7px;">💾</button>
+        </div>
+        <div class="toolbar-divider"></div>
+
+        <!-- 社交媒体尺寸预设 -->
+        <div class="toolbar-group">
+            <label>📱 尺寸</label>
+            <select id="sizePresetSelect" style="padding:5px 8px;border-radius:5px;border:1.5px solid #ddd;font-size:12px;font-weight:600;">
+                <option value="custom">🖐 自定义</option>
+                <option value="insta_sq">📷 IG方形 1080×1080</option>
+                <option value="xhs">📕 小红书 1080×1440</option>
+                <option value="story">📱 Story 1080×1920</option>
+                <option value="a4">🖨 A4打印 2480×3508</option>
+            </select>
+        </div>
+
+        <!-- 卡片比例 -->
+        <div class="toolbar-group">
+            <label>📐 比例</label>
+            <select id="cardRatioSelect" style="padding:5px 8px;border-radius:5px;border:1.5px solid #ddd;font-size:12px;font-weight:600;">
+                <option value="1">1:1</option>
+                <option value="1.333">4:3</option>
+                <option value="0.75">3:4</option>
+                <option value="0.667">2:3</option>
+            </select>
         </div>
         <div class="toolbar-divider"></div>
 
@@ -856,72 +1024,63 @@
 
         <!-- 背景图片上传 -->
         <div class="toolbar-group">
-            <label>🖼 背景图</label>
+            <label>🖼 背景</label>
             <button class="btn btn-bg-upload" id="btnBgUpload" onclick="triggerBgImageUpload()" title="导入海报背景图片">📁 导入</button>
             <button class="btn btn-bg-clear" id="btnBgClear" onclick="clearBgImage()" title="清除背景图片" style="display:none;">✕ 清除</button>
-            <input type="range" id="bgOpacitySlider" min="5" max="80" value="15" step="1" title="背景图透明度" style="width:60px;display:none;">
+            <input type="range" id="bgOpacitySlider" min="5" max="80" value="15" step="1" title="背景图透明度" style="width:50px;display:none;">
             <span class="opacity-value" id="bgOpacityValue" style="display:none;">15%</span>
         </div>
         <div class="toolbar-divider"></div>
 
         <!-- 列数 -->
         <div class="toolbar-group">
-            <label>📐 列数</label>
+            <label>列数</label>
             <input type="range" id="columnsSlider" min="1" max="6" value="3" step="1">
             <span class="range-value" id="columnsValue">3</span>
         </div>
 
-        <!-- 卡片间距 -->
+        <!-- 间距 -->
         <div class="toolbar-group">
-            <label>↔ 间距</label>
+            <label>间距</label>
             <input type="range" id="gapSlider" min="4" max="40" value="16" step="2">
-            <span class="range-value" id="gapValue">16</span>px
+            <span class="range-value" id="gapValue">16</span>
         </div>
 
         <!-- 行宽 -->
         <div class="toolbar-group">
-            <label>📏 宽度</label>
-            <input type="range" id="rowWidthSlider" min="400" max="1400" value="900" step="20">
-            <span class="range-value" id="rowWidthValue">900</span>px
+            <label>宽度</label>
+            <input type="range" id="rowWidthSlider" min="400" max="2500" value="900" step="20">
+            <span class="range-value" id="rowWidthValue">900</span>
+        </div>
+
+        <!-- 圆角 -->
+        <div class="toolbar-group">
+            <label>圆角</label>
+            <input type="range" id="borderRadiusSlider" min="0" max="30" value="8" step="1">
+            <span class="range-value" id="borderRadiusValue">8</span>px
         </div>
         <div class="toolbar-divider"></div>
 
-        <!-- 自定义配色 -->
+        <!-- 配色 -->
         <div class="toolbar-group">
-            <label>背景</label>
-            <input type="color" id="colorBg" value="#ffffff" title="海报背景色">
-        </div>
-        <div class="toolbar-group">
-            <label>卡片</label>
-            <input type="color" id="colorCard" value="#fafafa" title="卡片背景色">
-        </div>
-        <div class="toolbar-group">
-            <label>文字</label>
-            <input type="color" id="colorText" value="#1a1a1a" title="商品名称等文字颜色">
-        </div>
-        <div class="toolbar-group">
-            <label>强调</label>
-            <input type="color" id="colorAccent" value="#333333" title="强调色（边框/装饰/角标）">
-        </div>
-        <div class="toolbar-group">
-            <label>价格</label>
-            <input type="color" id="colorPrice" value="#c0392b" title="价格颜色">
-        </div>
-        <div class="toolbar-group">
-            <label>标题</label>
-            <input type="color" id="colorTitle" value="#1a1a1a" title="海报大标题颜色">
-        </div>
-        <div class="toolbar-group">
-            <label>副标题</label>
-            <input type="color" id="colorSubtitle" value="#555555" title="海报副标题颜色">
+            <input type="color" id="colorBg" value="#ffffff" title="背景">
+            <input type="color" id="colorCard" value="#fafafa" title="卡片">
+            <input type="color" id="colorText" value="#1a1a1a" title="文字">
+            <input type="color" id="colorAccent" value="#333333" title="强调">
+            <input type="color" id="colorPrice" value="#c0392b" title="价格">
+            <input type="color" id="colorTitle" value="#1a1a1a" title="标题">
+            <input type="color" id="colorSubtitle" value="#555555" title="副标题">
         </div>
         <div class="toolbar-divider"></div>
 
         <!-- 操作按钮 -->
-        <button class="btn btn-primary" onclick="addProduct()" title="添加新商品">＋ 添加</button>
-        <button class="btn btn-outline" onclick="openBatchImport()" title="批量导入CSV/TSV">📋 批量导入</button>
-        <button class="btn btn-outline" onclick="resetAll()" title="恢复默认">↺ 重置</button>
-        <button class="btn btn-export" onclick="exportJPG()" title="导出为JPG图片">📸 导出JPG</button>
+        <button class="btn btn-primary" onclick="addProduct()">＋ 添加</button>
+        <button class="btn btn-outline" onclick="openBatchImport()">📋 批量导入</button>
+        <button class="btn btn-qr" id="btnQrCode" onclick="openQrModal()" title="生成二维码">🔗 QR码</button>
+        <button class="btn btn-outline" onclick="resetAll()">↺ 重置</button>
+        <button class="btn btn-export btn-export-jpg" onclick="exportImage('jpg')">📸 JPG</button>
+        <button class="btn btn-export btn-export-png" onclick="exportImage('png')">🖼 PNG</button>
+        <button class="btn btn-outline" onclick="printPoster()" title="打印海报">🖨 打印</button>
     </div>
 
     <!-- ==================== 海报区域 ==================== -->
@@ -935,6 +1094,9 @@
             </div>
             <div class="products-grid" id="productsGrid">
                 <!-- 动态生成 -->
+            </div>
+            <div class="poster-qr-area" id="posterQrArea" style="display:none;">
+                <!-- QR 码动态生成 -->
             </div>
         </div>
     </div>
@@ -956,11 +1118,26 @@
         <div class="modal-dialog">
             <h3>📋 批量导入商品</h3>
             <p>每行一个商品，使用 <strong>Tab</strong> 或 <strong>逗号</strong> 分隔：</p>
-            <textarea id="batchImportText" placeholder="商品名称&#9;价格&#9;标签&#10;初百日战纪 立牌&#9;¥129&#9;新品&#10;苍澄 徽章&#9;¥99&#9;限定&#10;明信片套装&#9;¥40&#9;特典"></textarea>
-            <p class="hint-text">💡 格式：<code>名称 [Tab或逗号] 价格 [Tab或逗号] 标签</code><br>标签可省略。价格为空则默认 ¥000。</p>
+            <textarea id="batchImportText" placeholder="名称&#9;价格&#9;标签&#9;描述&#10;立牌&#9;¥129&#9;新品&#9;15cm/亚克力&#10;徽章&#9;¥99&#9;限定&#10;明信片&#9;¥40&#9;特典&#9;套装"></textarea>
+            <p class="hint-text">💡 格式：<code>名称 [Tab或逗号] 价格 [Tab或逗号] 标签 [Tab或逗号] 描述</code><br>标签用逗号分隔多个（如「限定,预售」），描述可选。</p>
             <div class="modal-actions">
                 <button class="btn btn-outline" onclick="closeBatchImport()">取消</button>
                 <button class="btn btn-primary" onclick="executeBatchImport()">📥 导入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== QR码弹窗 ==================== -->
+    <div class="modal-overlay" id="qrModal" style="display:none;">
+        <div class="modal-dialog">
+            <h3>🔗 生成二维码</h3>
+            <p>输入链接地址，将在海报底部生成二维码：</p>
+            <input type="text" id="qrUrlInput" placeholder="https://shop.example.com/your-link" style="margin-bottom:8px;">
+            <p class="hint-text">💡 如网店链接、社交媒体页面、预售链接等</p>
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="btnClearQr" onclick="clearQrCode()" style="display:none;">🗑 清除二维码</button>
+                <button class="btn btn-outline" onclick="closeQrModal()">取消</button>
+                <button class="btn btn-primary" onclick="generateQrCode()">✨ 生成</button>
             </div>
         </div>
     </div>
@@ -969,18 +1146,25 @@
         (function() {
             // ==================== 全局状态 ====================
             const DEFAULT_PRODUCTS = [
-                { id: 1, name: '初百日战纪 亚克力立牌', price: '¥129', image: null, tag: '新品', badge: 'HOT' },
-                { id: 2, name: '苍澄 角色徽章', price: '¥99', image: null, tag: '限定', badge: '' },
-                { id: 3, name: '苍澄 明信片套装', price: '¥40', image: null, tag: '特典', badge: 'NEW' },
-                { id: 4, name: '苍澄 挂件', price: '¥4099', image: null, tag: '预售', badge: '' },
+                { id: 1, name: '初百日战纪 亚克力立牌', price: '¥129', image: null, tag: '新品', badge: 'HOT',
+                    description: '尺寸：15cm / 材质：亚克力' },
+                { id: 2, name: '苍澄 角色徽章', price: '¥99', image: null, tag: '限定, 预售', badge: '',
+                    description: '' },
+                { id: 3, name: '苍澄 明信片套装', price: '¥40', image: null, tag: '特典', badge: 'NEW',
+            description: '' },
+                { id: 4, name: '苍澄 挂件', price: '¥4099', image: null, tag: '预售', badge: '',
+                description: '稀有款' },
             ];
 
             let products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
             let nextId = 5;
             let currentTemplate = 'monochrome';
+            let currentSizePreset = 'custom';
             let columnCount = 3;
             let cardGap = 16;
             let rowWidth = 900;
+            let cardRatio = 1; // aspect-ratio 值
+            let cardBorderRadius = 8;
             let customColors = {
                 bg: '#ffffff',
                 card: '#fafafa',
@@ -993,12 +1177,22 @@
             let colorsOverridden = false;
             let bgImageDataUrl = null;
             let bgImageOpacity = 0.15;
+            let qrCodeData = { url: '', label: '' };
+
+            // ==================== 社交媒体尺寸预设 ====================
+            const SIZE_PRESETS = {
+                custom: { name: '自定义', width: null, cols: null, ratio: null, gap: null },
+                insta_sq: { name: 'IG方形', width: 1080, cols: 3, ratio: 1, gap: 16 },
+                xhs: { name: '小红书', width: 1080, cols: 2, ratio: 0.75, gap: 16 },
+                story: { name: 'Story', width: 1080, cols: 2, ratio: 0.667, gap: 14 },
+                a4: { name: 'A4打印', width: 2480, cols: 4, ratio: 0.75, gap: 24 },
+            };
 
             // ==================== 撤销/重做历史栈 ====================
             const MAX_HISTORY = 50;
             let undoStack = [];
             let redoStack = [];
-            let historyLocked = false; // 恢复状态时不记录历史
+            let historyLocked = false;
 
             // ==================== 模板定义 ====================
             const TEMPLATES = {
@@ -1192,13 +1386,18 @@
             const productsGrid = document.getElementById('productsGrid');
             const posterTitle = document.getElementById('posterTitle');
             const posterSubtitle = document.getElementById('posterSubtitle');
+            const posterQrArea = document.getElementById('posterQrArea');
             const templateSelect = document.getElementById('templateSelect');
+            const sizePresetSelect = document.getElementById('sizePresetSelect');
+            const cardRatioSelect = document.getElementById('cardRatioSelect');
             const columnsSlider = document.getElementById('columnsSlider');
             const columnsValue = document.getElementById('columnsValue');
             const gapSlider = document.getElementById('gapSlider');
             const gapValue = document.getElementById('gapValue');
             const rowWidthSlider = document.getElementById('rowWidthSlider');
             const rowWidthValue = document.getElementById('rowWidthValue');
+            const borderRadiusSlider = document.getElementById('borderRadiusSlider');
+            const borderRadiusValue = document.getElementById('borderRadiusValue');
             const colorBg = document.getElementById('colorBg');
             const colorCard = document.getElementById('colorCard');
             const colorText = document.getElementById('colorText');
@@ -1213,9 +1412,13 @@
             const bgOpacityValue = document.getElementById('bgOpacityValue');
             const btnUndo = document.getElementById('btnUndo');
             const btnRedo = document.getElementById('btnRedo');
+            const btnQrCode = document.getElementById('btnQrCode');
+            const btnClearQr = document.getElementById('btnClearQr');
             const templateConfirmModal = document.getElementById('templateConfirmModal');
             const batchImportModal = document.getElementById('batchImportModal');
             const batchImportText = document.getElementById('batchImportText');
+            const qrModal = document.getElementById('qrModal');
+            const qrUrlInput = document.getElementById('qrUrlInput');
 
             // ==================== 状态快照 ====================
             function captureState() {
@@ -1223,13 +1426,17 @@
                     products: JSON.parse(JSON.stringify(products)),
                     nextId: nextId,
                     currentTemplate: currentTemplate,
+                    currentSizePreset: currentSizePreset,
                     columnCount: columnCount,
                     cardGap: cardGap,
                     rowWidth: rowWidth,
+                    cardRatio: cardRatio,
+                    cardBorderRadius: cardBorderRadius,
                     customColors: Object.assign({}, customColors),
                     colorsOverridden: colorsOverridden,
                     bgImageDataUrl: bgImageDataUrl,
                     bgImageOpacity: bgImageOpacity,
+                    qrCodeData: Object.assign({}, qrCodeData),
                     titleText: posterTitle.textContent,
                     subtitleText: posterSubtitle.textContent,
                 };
@@ -1240,23 +1447,31 @@
                 products = JSON.parse(JSON.stringify(state.products));
                 nextId = state.nextId;
                 currentTemplate = state.currentTemplate;
+                currentSizePreset = state.currentSizePreset || 'custom';
                 columnCount = state.columnCount;
                 cardGap = state.cardGap;
                 rowWidth = state.rowWidth;
+                cardRatio = state.cardRatio || 1;
+                cardBorderRadius = state.cardBorderRadius || 8;
                 customColors = Object.assign({}, state.customColors);
                 colorsOverridden = state.colorsOverridden;
                 bgImageDataUrl = state.bgImageDataUrl;
                 bgImageOpacity = state.bgImageOpacity;
+                qrCodeData = Object.assign({}, state.qrCodeData || { url: '', label: '' });
                 posterTitle.textContent = state.titleText;
                 posterSubtitle.textContent = state.subtitleText;
 
                 templateSelect.value = currentTemplate;
+                sizePresetSelect.value = currentSizePreset;
+                cardRatioSelect.value = String(cardRatio);
                 columnsSlider.value = columnCount;
                 columnsValue.textContent = columnCount;
                 gapSlider.value = cardGap;
                 gapValue.textContent = cardGap;
                 rowWidthSlider.value = rowWidth;
                 rowWidthValue.textContent = rowWidth;
+                borderRadiusSlider.value = cardBorderRadius;
+                borderRadiusValue.textContent = cardBorderRadius;
                 syncColorPickersToCustom();
                 applyTemplateToDOM(currentTemplate, customColors, colorsOverridden);
                 updateLayout();
@@ -1265,6 +1480,9 @@
                     applyBgImage();
                 } else {
                     clearBgImageDOM();
+                }
+                if (qrCodeData.url) {
+                    renderQrToPoster();
                 }
                 updateUndoRedoButtons();
                 autoSave();
@@ -1314,7 +1532,7 @@
             window.redo = redo;
 
             // ==================== localStorage ====================
-            const STORAGE_KEY = 'poster-maker-state-v2';
+            const STORAGE_KEY = 'poster-maker-state-v3';
             const CUSTOM_TEMPLATES_KEY = 'poster-maker-custom-templates';
 
             function autoSave() {
@@ -1322,7 +1540,6 @@
                     const state = captureState();
                     const json = JSON.stringify(state);
                     if (json.length > 4 * 1024 * 1024) {
-                        // 超过 4MB，尝试去掉图片数据
                         const stateNoImages = JSON.parse(JSON.stringify(state));
                         stateNoImages.bgImageDataUrl = null;
                         stateNoImages.products = stateNoImages.products.map(p =>
@@ -1331,7 +1548,6 @@
                         const jsonNoImages = JSON.stringify(stateNoImages);
                         if (jsonNoImages.length < 4 * 1024 * 1024) {
                             localStorage.setItem(STORAGE_KEY, jsonNoImages);
-                            console.warn('图片数据过大，已跳过图片的本地存储');
                         }
                     } else {
                         localStorage.setItem(STORAGE_KEY, json);
@@ -1345,10 +1561,8 @@
                 try {
                     const raw = localStorage.getItem(STORAGE_KEY);
                     if (!raw) return null;
-                    const state = JSON.parse(raw);
-                    return state;
+                    return JSON.parse(raw);
                 } catch (e) {
-                    console.warn('localStorage 读取失败:', e.message);
                     return null;
                 }
             }
@@ -1356,19 +1570,14 @@
             function loadCustomTemplates() {
                 try {
                     const raw = localStorage.getItem(CUSTOM_TEMPLATES_KEY);
-                    if (!raw) return [];
-                    return JSON.parse(raw);
-                } catch (e) {
-                    return [];
-                }
+                    return raw ? JSON.parse(raw) : [];
+                } catch (e) { return []; }
             }
 
             function saveCustomTemplatesToStorage(templates) {
                 try {
                     localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(templates));
-                } catch (e) {
-                    showToast('⚠️ 保存模板失败，存储空间不足');
-                }
+                } catch (e) { showToast('⚠️ 保存模板失败'); }
             }
 
             // ==================== Toast ====================
@@ -1392,15 +1601,11 @@
                 input.accept = 'image/*';
                 input.style.display = 'none';
                 document.body.appendChild(input);
-
                 let handled = false;
                 input.addEventListener('change', (e) => {
                     handled = true;
                     const file = e.target.files[0];
-                    if (!file) {
-                        document.body.removeChild(input);
-                        return;
-                    }
+                    if (!file) { document.body.removeChild(input); return; }
                     const reader = new FileReader();
                     reader.onload = (ev) => {
                         saveHistory();
@@ -1411,17 +1616,10 @@
                     };
                     reader.readAsDataURL(file);
                 });
-                // 处理取消选择
-                input.addEventListener('cancel', () => {
-                    handled = true;
-                    document.body.removeChild(input);
-                });
-                setTimeout(() => {
-                    if (!handled && document.body.contains(input)) {
-                        document.body.removeChild(input);
-                    }
-                }, 30000);
-
+                input.addEventListener('cancel', () => { handled = true;
+                    document.body.removeChild(input); });
+                setTimeout(() => { if (!handled && document.body.contains(input)) document.body.removeChild(
+                        input); }, 30000);
                 input.click();
             }
 
@@ -1430,7 +1628,6 @@
                 posterBgOverlay.style.backgroundImage = `url('${bgImageDataUrl}')`;
                 posterBgOverlay.style.opacity = bgImageOpacity;
                 posterBgOverlay.classList.add('visible');
-
                 btnBgUpload.classList.add('has-bg');
                 btnBgUpload.textContent = '📁 更换';
                 btnBgClear.style.display = 'flex';
@@ -1472,7 +1669,6 @@
             function applyTemplateToDOM(tplName, colors, overridden) {
                 const tpl = TEMPLATES[tplName];
                 if (!tpl) return;
-
                 const root = posterContainer.style;
                 root.setProperty('--poster-bg', colors.bg);
                 root.setProperty('--card-bg', colors.card);
@@ -1497,7 +1693,8 @@
                 root.setProperty('--font-body', tpl.fontBody);
                 root.setProperty('--font-price', tpl.fontPrice);
                 root.setProperty('--image-area-bg', tpl.imageAreaBg || '#eaeaea');
-
+                root.setProperty('--card-border-radius', cardBorderRadius + 'px');
+                root.setProperty('--card-ratio', cardRatio);
                 if (!overridden) syncColorPickersToCustom();
                 if (bgImageDataUrl) applyBgImage();
             }
@@ -1506,7 +1703,6 @@
                 const tpl = TEMPLATES[tplName];
                 if (!tpl) return;
                 currentTemplate = tplName;
-
                 if (!keepColors) {
                     colorsOverridden = false;
                     customColors.bg = tpl.posterBg;
@@ -1517,11 +1713,7 @@
                     customColors.title = tpl.titleColor;
                     customColors.subtitle = tpl.subtitleColor || tpl.textSecondary;
                 }
-                // 如果保留配色，标记为已覆盖
-                if (keepColors) {
-                    colorsOverridden = true;
-                }
-
+                if (keepColors) colorsOverridden = true;
                 applyTemplateToDOM(tplName, customColors, colorsOverridden);
             }
 
@@ -1549,8 +1741,33 @@
                     subtitle: '--subtitle-color',
                 };
                 posterContainer.style.setProperty(map[which], value);
-                // 颜色变化不需要完全重新渲染，但需要 autoSave
                 autoSave();
+            }
+
+            // ==================== 应用尺寸预设 ====================
+            function applySizePreset(presetKey) {
+                const preset = SIZE_PRESETS[presetKey];
+                if (!preset || presetKey === 'custom') {
+                    currentSizePreset = 'custom';
+                    return;
+                }
+                currentSizePreset = presetKey;
+                if (preset.width) rowWidth = preset.width;
+                if (preset.cols) columnCount = preset.cols;
+                if (preset.ratio !== null && preset.ratio !== undefined) cardRatio = preset.ratio;
+                if (preset.gap) cardGap = preset.gap;
+
+                rowWidthSlider.value = rowWidth;
+                rowWidthValue.textContent = rowWidth;
+                columnsSlider.value = columnCount;
+                columnsValue.textContent = columnCount;
+                gapSlider.value = cardGap;
+                gapValue.textContent = cardGap;
+                cardRatioSelect.value = String(cardRatio);
+
+                posterContainer.style.setProperty('--card-ratio', cardRatio);
+                updateLayout();
+                renderAllProducts();
             }
 
             // ==================== 更新布局 ====================
@@ -1558,11 +1775,16 @@
                 columnCount = parseInt(columnsSlider.value);
                 cardGap = parseInt(gapSlider.value);
                 rowWidth = parseInt(rowWidthSlider.value);
+                cardBorderRadius = parseInt(borderRadiusSlider.value);
+                cardRatio = parseFloat(cardRatioSelect.value);
                 columnsValue.textContent = columnCount;
                 gapValue.textContent = cardGap;
                 rowWidthValue.textContent = rowWidth;
+                borderRadiusValue.textContent = cardBorderRadius;
 
                 posterContainer.style.maxWidth = rowWidth + 'px';
+                posterContainer.style.setProperty('--card-border-radius', cardBorderRadius + 'px');
+                posterContainer.style.setProperty('--card-ratio', cardRatio);
                 productsGrid.style.gridTemplateColumns = `repeat(${columnCount}, 1fr)`;
                 productsGrid.style.gap = cardGap + 'px';
             }
@@ -1578,6 +1800,7 @@
                     card.setAttribute('data-index', index);
                     card.draggable = true;
 
+                    // 角标
                     let badgeHTML = '';
                     if (prod.badge && prod.badge.trim()) {
                         badgeHTML =
@@ -1587,96 +1810,91 @@
                             `<div class="card-badge" data-action="edit-badge" data-id="${prod.id}" title="点击添加角标" style="background:transparent;color:#aaa;opacity:0.6;border:1px dashed #ccc;">+</div>`;
                     }
 
+                    // 图片
                     const hasImage = prod.image && prod.image.trim();
                     const imgContentHTML = hasImage ?
                         `<div class="card-image-bg" style="background-image: url('${prod.image}');"></div>` :
                         '';
                     const placeholderHTML = hasImage ?
                         '' :
-                        `<div class="card-image-placeholder">
-                                <span class="icon-upload">📷</span>
-                                <span>点击上传</span>
-                            </div>`;
+                        `<div class="card-image-placeholder"><span class="icon-upload">📷</span><span>点击上传</span></div>`;
 
-                    const tagHTML = prod.tag ?
-                        `<span class="card-tag" data-action="edit-tag" data-id="${prod.id}" title="点击编辑标签">${escapeHTML(prod.tag)}</span>` :
-                        `<span class="card-tag" data-action="edit-tag" data-id="${prod.id}" title="点击添加标签" style="background:transparent;color:#aaa;border:1px dashed #ccc;">+ 标签</span>`;
+                    // 多标签
+                    const rawTags = prod.tag || '';
+                    const tagList = rawTags.split(/[,，]/).map(t => t.trim()).filter(Boolean);
+                    let tagsHTML = '';
+                    if (tagList.length > 0) {
+                        tagsHTML = tagList.map(t =>
+                            `<span class="card-tag" data-action="edit-tag" data-id="${prod.id}" title="点击编辑标签">${escapeHTML(t)}</span>`
+                        ).join('');
+                    } else {
+                        tagsHTML =
+                            `<span class="card-tag placeholder-tag" data-action="edit-tag" data-id="${prod.id}" title="点击添加标签">+ 标签</span>`;
+                    }
+                    const tagsRowHTML = `<div class="card-tags-row">${tagsHTML}</div>`;
+
+                    // 描述
+                    const descText = prod.description || '';
+                    const descHTML = descText ?
+                        `<div class="card-description" data-action="edit-description" data-id="${prod.id}" title="点击编辑描述">${escapeHTML(descText)}</div>` :
+                        `<div class="card-description empty-desc" data-action="edit-description" data-id="${prod.id}" title="点击添加描述">+ 添加描述</div>`;
 
                     card.innerHTML = `
-                            ${badgeHTML}
-                            <div class="card-actions">
-                                <button class="btn-upload-card" title="上传图片">🖼</button>
-                                <button class="btn-copy-card" title="复制商品">📋</button>
-                                <button class="btn-del-card" title="删除商品">✕</button>
-                            </div>
-                            <div class="card-image-area ${hasImage ? 'has-image' : ''}" data-action="upload" data-id="${prod.id}">
-                                ${imgContentHTML}
-                                ${placeholderHTML}
-                            </div>
-                            <div class="card-info">
-                                <div class="card-name" data-action="edit-name" data-id="${prod.id}">${escapeHTML(prod.name)}</div>
-                                ${tagHTML}
-                                <div class="card-price" data-action="edit-price" data-id="${prod.id}">${escapeHTML(prod.price)}</div>
-                            </div>
-                        `;
+                        ${badgeHTML}
+                        <div class="card-actions">
+                            <button class="btn-upload-card" title="上传图片">🖼</button>
+                            <button class="btn-copy-card" title="复制商品">📋</button>
+                            <button class="btn-del-card" title="删除商品">✕</button>
+                        </div>
+                        <div class="card-image-area ${hasImage ? 'has-image' : ''}">
+                            ${imgContentHTML}
+                            ${placeholderHTML}
+                        </div>
+                        <div class="card-info">
+                            <div class="card-name" data-action="edit-name" data-id="${prod.id}">${escapeHTML(prod.name)}</div>
+                            ${descHTML}
+                            ${tagsRowHTML}
+                            <div class="card-price" data-action="edit-price" data-id="${prod.id}">${escapeHTML(prod.price)}</div>
+                        </div>
+                    `;
 
-                    // 图片区域点击
+                    // 图片点击
                     const imgArea = card.querySelector('.card-image-area');
-                    imgArea.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        triggerImageUpload(prod.id);
-                    });
+                    imgArea.addEventListener('click', (e) => { e.stopPropagation();
+                        triggerImageUpload(prod.id); });
 
                     // 名称编辑
-                    const nameEl = card.querySelector('.card-name');
-                    nameEl.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        editInline(nameEl, 'name', prod.id);
-                    });
-
+                    card.querySelector('.card-name').addEventListener('click', (e) => { e.stopPropagation();
+                        editInline(card.querySelector('.card-name'), 'name', prod.id); });
                     // 价格编辑
-                    const priceEl = card.querySelector('.card-price');
-                    priceEl.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        editInline(priceEl, 'price', prod.id);
-                    });
+                    card.querySelector('.card-price').addEventListener('click', (e) => { e.stopPropagation();
+                        editInline(card.querySelector('.card-price'), 'price', prod.id); });
+                    // 描述编辑
+                    const descEl = card.querySelector('.card-description');
+                    if (descEl) descEl.addEventListener('click', (e) => { e.stopPropagation();
+                        editInline(descEl, 'description', prod.id); });
 
-                    // 标签编辑
-                    const tagEl = card.querySelector('.card-tag');
-                    if (tagEl) {
-                        tagEl.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            editInline(tagEl, 'tag', prod.id);
-                        });
-                    }
+                    // 标签编辑（点击任意 tag 编辑整组标签）
+                    const tagEls = card.querySelectorAll('.card-tag');
+                    tagEls.forEach(tagEl => {
+                        tagEl.addEventListener('click', (e) => { e.stopPropagation();
+                            editInline(tagEl, 'tag', prod.id); });
+                    });
 
                     // 角标编辑
                     const badgeEl = card.querySelector('.card-badge');
-                    if (badgeEl) {
-                        badgeEl.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            editInline(badgeEl, 'badge', prod.id);
-                        });
-                    }
+                    if (badgeEl) badgeEl.addEventListener('click', (e) => { e.stopPropagation();
+                        editInline(badgeEl, 'badge', prod.id); });
 
                     // 操作按钮
-                    const btnUpload = card.querySelector('.btn-upload-card');
-                    btnUpload.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        triggerImageUpload(prod.id);
-                    });
-                    const btnCopy = card.querySelector('.btn-copy-card');
-                    btnCopy.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        duplicateProduct(prod.id);
-                    });
-                    const btnDel = card.querySelector('.btn-del-card');
-                    btnDel.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        deleteProduct(prod.id);
-                    });
+                    card.querySelector('.btn-upload-card').addEventListener('click', (e) => { e.stopPropagation();
+                        triggerImageUpload(prod.id); });
+                    card.querySelector('.btn-copy-card').addEventListener('click', (e) => { e.stopPropagation();
+                        duplicateProduct(prod.id); });
+                    card.querySelector('.btn-del-card').addEventListener('click', (e) => { e.stopPropagation();
+                        deleteProduct(prod.id); });
 
-                    // 桌面端拖拽
+                    // 桌面拖拽
                     card.addEventListener('dragstart', handleDragStart);
                     card.addEventListener('dragover', handleDragOver);
                     card.addEventListener('dragenter', handleDragEnter);
@@ -1699,10 +1917,9 @@
                 addPlaceholder.addEventListener('click', () => addProduct());
                 productsGrid.appendChild(addPlaceholder);
 
-                if (bgImageDataUrl) {
-                    applyBgImage();
-                }
+                if (bgImageDataUrl) applyBgImage();
                 updateLayout();
+                if (qrCodeData.url) renderQrToPoster();
             }
 
             function escapeHTML(str) {
@@ -1713,10 +1930,8 @@
             // ==================== 内联编辑 ====================
             function editInline(element, field, productId) {
                 if (element.querySelector('input')) return;
-
                 const prod = products.find(p => p.id === productId);
                 if (!prod) return;
-
                 const originalText = prod[field] || '';
 
                 saveHistory();
@@ -1740,6 +1955,10 @@
                     input.style.letterSpacing = '1px';
                     input.style.fontWeight = '700';
                 }
+                if (field === 'description') {
+                    input.style.fontSize = '11px';
+                    input.style.padding = '2px 6px';
+                }
 
                 element.textContent = '';
                 element.appendChild(input);
@@ -1748,14 +1967,10 @@
 
                 const save = () => {
                     let newVal = input.value.trim();
-                    if (field === 'badge' || field === 'tag') {
+                    if (field === 'badge' || field === 'tag' || field === 'description') {
                         prod[field] = newVal;
                     } else {
-                        if (newVal) {
-                            prod[field] = newVal;
-                        } else {
-                            newVal = originalText;
-                        }
+                        prod[field] = newVal || originalText;
                     }
                     input.remove();
                     renderAllProducts();
@@ -1765,10 +1980,8 @@
                 input.addEventListener('blur', save);
                 input.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') input.blur();
-                    if (e.key === 'Escape') {
-                        input.value = originalText;
-                        input.blur();
-                    }
+                    if (e.key === 'Escape') { input.value = originalText;
+                        input.blur(); }
                 });
             }
 
@@ -1779,38 +1992,26 @@
                 input.accept = 'image/*';
                 input.style.display = 'none';
                 document.body.appendChild(input);
-
                 let handled = false;
                 input.addEventListener('change', (e) => {
                     handled = true;
                     const file = e.target.files[0];
-                    if (!file) {
-                        document.body.removeChild(input);
-                        return;
-                    }
+                    if (!file) { document.body.removeChild(input); return; }
                     const reader = new FileReader();
                     reader.onload = (ev) => {
                         saveHistory();
                         const prod = products.find(p => p.id === productId);
-                        if (prod) {
-                            prod.image = ev.target.result;
+                        if (prod) { prod.image = ev.target.result;
                             renderAllProducts();
-                            showToast('✅ 图片已上传');
-                        }
+                            showToast('✅ 图片已上传'); }
                         document.body.removeChild(input);
                     };
                     reader.readAsDataURL(file);
                 });
-                input.addEventListener('cancel', () => {
-                    handled = true;
-                    document.body.removeChild(input);
-                });
-                setTimeout(() => {
-                    if (!handled && document.body.contains(input)) {
-                        document.body.removeChild(input);
-                    }
-                }, 30000);
-
+                input.addEventListener('cancel', () => { handled = true;
+                    document.body.removeChild(input); });
+                setTimeout(() => { if (!handled && document.body.contains(input)) document.body.removeChild(
+                        input); }, 30000);
                 input.click();
             }
 
@@ -1819,24 +2020,15 @@
             // ==================== 添加/删除/复制商品 ====================
             function addProduct() {
                 saveHistory();
-                const newProd = {
-                    id: nextId++,
-                    name: '新商品名称',
-                    price: '¥000',
-                    image: null,
-                    tag: '',
-                    badge: '',
-                };
+                const newProd = { id: nextId++, name: '新商品名称', price: '¥000', image: null, tag: '', badge: '',
+                    description: '' };
                 products.push(newProd);
                 renderAllProducts();
                 showToast('➕ 已添加新商品');
             }
 
             function deleteProduct(productId) {
-                if (products.length <= 1) {
-                    showToast('⚠️ 至少保留一个商品');
-                    return;
-                }
+                if (products.length <= 1) { showToast('⚠️ 至少保留一个商品'); return; }
                 saveHistory();
                 products = products.filter(p => p.id !== productId);
                 renderAllProducts();
@@ -1861,23 +2053,36 @@
                 nextId = 5;
                 colorsOverridden = false;
                 currentTemplate = 'monochrome';
-                templateSelect.value = 'monochrome';
+                currentSizePreset = 'custom';
                 columnCount = 3;
                 cardGap = 16;
                 rowWidth = 900;
+                cardRatio = 1;
+                cardBorderRadius = 8;
+                templateSelect.value = 'monochrome';
+                sizePresetSelect.value = 'custom';
+                cardRatioSelect.value = '1';
                 columnsSlider.value = 3;
                 gapSlider.value = 16;
                 rowWidthSlider.value = 900;
+                borderRadiusSlider.value = 8;
                 columnsValue.textContent = '3';
                 gapValue.textContent = '16';
                 rowWidthValue.textContent = '900';
+                borderRadiusValue.textContent = '8';
                 posterTitle.textContent = '✦ 商 品 贩 售 ✦';
                 posterSubtitle.textContent = '— 这里是小标题 —';
                 bgImageDataUrl = null;
                 bgImageOpacity = 0.15;
+                qrCodeData = { url: '', label: '' };
                 clearBgImageDOM();
+                posterQrArea.style.display = 'none';
+                posterQrArea.innerHTML = '';
+                btnQrCode.classList.remove('has-qr');
                 applyTemplate('monochrome', false);
                 syncColorPickersToCustom();
+                posterContainer.style.setProperty('--card-border-radius', '8px');
+                posterContainer.style.setProperty('--card-ratio', '1');
                 renderAllProducts();
                 updateLayout();
                 redoStack = [];
@@ -1889,9 +2094,8 @@
             window.addProduct = addProduct;
             window.deleteProduct = deleteProduct;
             window.resetAll = resetAll;
-            window.exportJPG = exportJPG;
 
-            // ==================== 桌面端拖拽排序 ====================
+            // ==================== 桌面端拖拽 ====================
             let dragSrcIndex = null;
 
             function handleDragStart(e) {
@@ -1901,22 +2105,15 @@
                 e.dataTransfer.setData('text/plain', dragSrcIndex);
             }
 
-            function handleDragOver(e) {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-            }
+            function handleDragOver(e) { e.preventDefault();
+                e.dataTransfer.dropEffect = 'move'; }
 
             function handleDragEnter(e) {
                 e.preventDefault();
-                const idx = parseInt(this.getAttribute('data-index'));
-                if (idx !== dragSrcIndex) {
-                    this.classList.add('drag-over');
-                }
+                if (parseInt(this.getAttribute('data-index')) !== dragSrcIndex) this.classList.add('drag-over');
             }
 
-            function handleDragLeave(e) {
-                this.classList.remove('drag-over');
-            }
+            function handleDragLeave(e) { this.classList.remove('drag-over'); }
 
             function handleDrop(e) {
                 e.preventDefault();
@@ -1934,32 +2131,19 @@
 
             function handleDragEnd(e) {
                 this.classList.remove('drag-source');
-                document.querySelectorAll('.product-card').forEach(c => {
-                    c.classList.remove('drag-over');
-                });
+                document.querySelectorAll('.product-card').forEach(c => c.classList.remove('drag-over'));
                 dragSrcIndex = null;
             }
 
             // ==================== 移动端触摸拖拽 ====================
-            let touchData = {
-                card: null,
-                clone: null,
-                startX: 0,
-                startY: 0,
-                index: -1,
-                currentTarget: null,
-                isDragging: false,
-                hasMoved: false,
-            };
+            let touchData = { card: null, clone: null, startX: 0, startY: 0, index: -1, currentTarget: null,
+                isDragging: false, hasMoved: false };
 
             function handleTouchStart(e) {
-                // 如果触摸在输入框、按钮等交互元素上，不启动拖拽
-                if (e.target.closest('input, button, .card-image-area, .card-name, .card-price, .card-tag, .card-badge')) {
+                if (e.target.closest('input, button, .card-image-area, .card-name, .card-price, .card-tag, .card-badge, .card-description'))
                     return;
-                }
                 const card = e.target.closest('.product-card');
                 if (!card) return;
-
                 const touch = e.touches[0];
                 touchData.card = card;
                 touchData.startX = touch.clientX;
@@ -1972,19 +2156,14 @@
 
             function handleTouchMove(e) {
                 if (!touchData.card) return;
-
                 const touch = e.touches[0];
                 const dx = touch.clientX - touchData.startX;
                 const dy = touch.clientY - touchData.startY;
                 const dist = Math.sqrt(dx * dx + dy * dy);
-
-                // 移动超过 10px 才激活拖拽
                 if (!touchData.isDragging && dist < 10) return;
-
                 if (!touchData.isDragging) {
                     touchData.isDragging = true;
                     touchData.hasMoved = true;
-                    // 创建克隆体
                     const card = touchData.card;
                     const clone = card.cloneNode(true);
                     const rect = card.getBoundingClientRect();
@@ -1997,18 +2176,12 @@
                     touchData.clone = clone;
                     card.classList.add('touch-dragging');
                 }
-
                 e.preventDefault();
-
-                // 移动克隆体
                 const clone = touchData.clone;
                 clone.style.left = (touch.clientX - clone.offsetWidth / 2) + 'px';
                 clone.style.top = (touch.clientY - clone.offsetHeight / 2) + 'px';
-
-                // 检测下方卡片
                 const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
                 const cardBelow = elemBelow ? elemBelow.closest('.product-card') : null;
-
                 if (touchData.currentTarget && touchData.currentTarget !== cardBelow) {
                     touchData.currentTarget.classList.remove('drag-over');
                     touchData.currentTarget = null;
@@ -2021,13 +2194,9 @@
 
             function handleTouchEnd(e) {
                 if (!touchData.card) return;
-
-                if (touchData.clone) {
-                    document.body.removeChild(touchData.clone);
-                    touchData.clone = null;
-                }
+                if (touchData.clone) { document.body.removeChild(touchData.clone);
+                    touchData.clone = null; }
                 touchData.card.classList.remove('touch-dragging');
-
                 if (touchData.currentTarget) {
                     touchData.currentTarget.classList.remove('drag-over');
                     const targetIndex = parseInt(touchData.currentTarget.getAttribute('data-index'));
@@ -2039,28 +2208,18 @@
                         showToast('🔄 排序已更新');
                     }
                 }
-
-                // 重置
-                touchData.card = null;
-                touchData.clone = null;
-                touchData.index = -1;
-                touchData.currentTarget = null;
-                touchData.isDragging = false;
-                touchData.hasMoved = false;
+                touchData = { card: null, clone: null, startX: 0, startY: 0, index: -1, currentTarget: null,
+                    isDragging: false, hasMoved: false };
             }
 
             // ==================== 模板切换确认弹窗 ====================
             let pendingTemplate = null;
 
-            function showTemplateConfirm(tplName) {
-                pendingTemplate = tplName;
-                templateConfirmModal.style.display = 'flex';
-            }
+            function showTemplateConfirm(tplName) { pendingTemplate = tplName;
+                templateConfirmModal.style.display = 'flex'; }
 
-            function hideTemplateConfirm() {
-                pendingTemplate = null;
-                templateConfirmModal.style.display = 'none';
-            }
+            function hideTemplateConfirm() { pendingTemplate = null;
+                templateConfirmModal.style.display = 'none'; }
 
             document.getElementById('btnKeepColors').addEventListener('click', () => {
                 if (pendingTemplate) {
@@ -2071,7 +2230,6 @@
                 }
                 hideTemplateConfirm();
             });
-
             document.getElementById('btnOverrideColors').addEventListener('click', () => {
                 if (pendingTemplate) {
                     saveHistory();
@@ -2081,67 +2239,35 @@
                 }
                 hideTemplateConfirm();
             });
-
-            // 点击遮罩关闭
-            templateConfirmModal.addEventListener('click', (e) => {
-                if (e.target === templateConfirmModal) hideTemplateConfirm();
-            });
+            templateConfirmModal.addEventListener('click', (e) => { if (e.target === templateConfirmModal)
+                    hideTemplateConfirm(); });
 
             // ==================== 批量导入弹窗 ====================
-            function openBatchImport() {
-                batchImportText.value = '';
+            function openBatchImport() { batchImportText.value = '';
                 batchImportModal.style.display = 'flex';
-                setTimeout(() => batchImportText.focus(), 150);
-            }
+                setTimeout(() => batchImportText.focus(), 150); }
 
-            function closeBatchImport() {
-                batchImportModal.style.display = 'none';
-                batchImportText.value = '';
-            }
+            function closeBatchImport() { batchImportModal.style.display = 'none';
+                batchImportText.value = ''; }
 
             function executeBatchImport() {
                 const raw = batchImportText.value.trim();
-                if (!raw) {
-                    showToast('⚠️ 请输入商品数据');
-                    return;
-                }
-
+                if (!raw) { showToast('⚠️ 请输入商品数据'); return; }
                 const lines = raw.split(/\n/).filter(line => line.trim());
                 const newProducts = [];
-
                 for (const line of lines) {
-                    // 先尝试 Tab 分隔，再尝试逗号
                     let parts;
-                    if (line.includes('\t')) {
-                        parts = line.split('\t');
-                    } else if (line.includes(',')) {
-                        parts = line.split(',');
-                    } else {
-                        // 单列 = 仅名称
-                        parts = [line];
-                    }
-
+                    if (line.includes('\t')) parts = line.split('\t');
+                    else if (line.includes(',')) parts = line.split(',');
+                    else parts = [line];
                     const name = (parts[0] || '').trim();
                     if (!name) continue;
-
                     const price = (parts[1] || '').trim() || '¥000';
                     const tag = (parts[2] || '').trim();
-
-                    newProducts.push({
-                        id: nextId++,
-                        name: name,
-                        price: price,
-                        image: null,
-                        tag: tag,
-                        badge: '',
-                    });
+                    const description = (parts[3] || '').trim();
+                    newProducts.push({ id: nextId++, name, price, image: null, tag, badge: '', description });
                 }
-
-                if (newProducts.length === 0) {
-                    showToast('⚠️ 未识别到有效商品数据');
-                    return;
-                }
-
+                if (newProducts.length === 0) { showToast('⚠️ 未识别到有效数据'); return; }
                 saveHistory();
                 products = products.concat(newProducts);
                 closeBatchImport();
@@ -2152,24 +2278,112 @@
             window.openBatchImport = openBatchImport;
             window.closeBatchImport = closeBatchImport;
             window.executeBatchImport = executeBatchImport;
+            batchImportModal.addEventListener('click', (e) => { if (e.target === batchImportModal) closeBatchImport(); });
 
-            // 点击遮罩关闭
-            batchImportModal.addEventListener('click', (e) => {
-                if (e.target === batchImportModal) closeBatchImport();
-            });
+            // ==================== 二维码弹窗 ====================
+            function openQrModal() {
+                qrUrlInput.value = qrCodeData.url || '';
+                qrModal.style.display = 'flex';
+                if (qrCodeData.url) btnClearQr.style.display = 'flex';
+                else btnClearQr.style.display = 'none';
+                setTimeout(() => qrUrlInput.focus(), 150);
+            }
+
+            function closeQrModal() { qrModal.style.display = 'none'; }
+
+            function generateQrCode() {
+                const url = qrUrlInput.value.trim();
+                if (!url) { showToast('⚠️ 请输入链接地址'); return; }
+                saveHistory();
+                qrCodeData = { url, label: '扫码访问' };
+                renderQrToPoster();
+                closeQrModal();
+                showToast('🔗 二维码已生成');
+            }
+
+            function clearQrCode() {
+                saveHistory();
+                qrCodeData = { url: '', label: '' };
+                posterQrArea.style.display = 'none';
+                posterQrArea.innerHTML = '';
+                btnQrCode.classList.remove('has-qr');
+                btnClearQr.style.display = 'none';
+                showToast('🗑 二维码已清除');
+            }
+
+            function renderQrToPoster() {
+                if (!qrCodeData.url) return;
+                posterQrArea.style.display = 'flex';
+                posterQrArea.innerHTML =
+                    '<div class="qr-container"><div id="qrCodeTarget"></div><span class="qr-label" title="点击编辑标签">' +
+                    escapeHTML(qrCodeData.label) + '</span></div>';
+
+                // 生成 QR
+                const target = document.getElementById('qrCodeTarget');
+                if (target && typeof QRCode !== 'undefined') {
+                    new QRCode(target, {
+                        text: qrCodeData.url,
+                        width: 80,
+                        height: 80,
+                        colorDark: '#1a1a1a',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.M,
+                    });
+                }
+
+                btnQrCode.classList.add('has-qr');
+                btnClearQr.style.display = 'flex';
+
+                // 标签编辑
+                const labelEl = posterQrArea.querySelector('.qr-label');
+                if (labelEl) {
+                    labelEl.addEventListener('click', () => {
+                        const current = qrCodeData.label;
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.className = 'inline-edit-input';
+                        input.value = current;
+                        input.style.fontSize = '9px';
+                        input.style.textAlign = 'center';
+                        input.style.maxWidth = '80px';
+                        labelEl.textContent = '';
+                        labelEl.appendChild(input);
+                        input.focus();
+                        input.select();
+                        const save = () => {
+                            saveHistory();
+                            qrCodeData.label = input.value.trim() || current;
+                            input.remove();
+                            renderQrToPoster();
+                            autoSave();
+                        };
+                        input.addEventListener('blur', save);
+                        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); if (e
+                                .key === 'Escape') { input.value = current;
+                                input.blur(); } });
+                    });
+                }
+            }
+
+            window.openQrModal = openQrModal;
+            window.closeQrModal = closeQrModal;
+            window.generateQrCode = generateQrCode;
+            window.clearQrCode = clearQrCode;
+            qrModal.addEventListener('click', (e) => { if (e.target === qrModal) closeQrModal(); });
+
+            // ==================== 打印 ====================
+            function printPoster() {
+                showToast('🖨 正在准备打印...');
+                setTimeout(() => window.print(), 300);
+            }
+            window.printPoster = printPoster;
 
             // ==================== 保存自定义模板 ====================
             function saveCustomTemplate() {
                 const name = prompt('请输入自定义模板名称：', '我的配色');
                 if (!name || !name.trim()) return;
-
-                const template = {
-                    name: name.trim(),
-                    colors: Object.assign({}, customColors),
-                };
-
+                const template = { name: name.trim(), colors: Object.assign({}, customColors) };
                 const customTemplates = loadCustomTemplates();
-                // 检查同名
                 const existingIdx = customTemplates.findIndex(t => t.name === template.name);
                 if (existingIdx >= 0) {
                     if (!confirm(`模板「${template.name}」已存在，是否覆盖？`)) return;
@@ -2177,7 +2391,6 @@
                 } else {
                     customTemplates.push(template);
                 }
-
                 saveCustomTemplatesToStorage(customTemplates);
                 refreshTemplateSelect();
                 showToast(`💾 模板「${template.name}」已保存`);
@@ -2185,29 +2398,19 @@
 
             function refreshTemplateSelect() {
                 const customTemplates = loadCustomTemplates();
-
-                // 清除旧的自定义选项（保留内置模板）
                 const builtInCount = Object.keys(TEMPLATES).length;
-                while (templateSelect.options.length > builtInCount + 1) {
-                    templateSelect.remove(templateSelect.options.length - 1);
-                }
-                // 移除旧的分隔线和自定义选项
+                while (templateSelect.options.length > builtInCount + 1) templateSelect.remove(templateSelect.options
+                    .length - 1);
                 for (let i = templateSelect.options.length - 1; i >= 0; i--) {
-                    if (templateSelect.options[i].value.startsWith('custom_') || templateSelect.options[i]
-                        .value === '__sep__') {
-                        templateSelect.remove(i);
-                    }
+                    if (templateSelect.options[i].value.startsWith('custom_') || templateSelect.options[i].value ===
+                        '__sep__') templateSelect.remove(i);
                 }
-
                 if (customTemplates.length > 0) {
-                    // 添加分隔线
                     const sep = document.createElement('option');
                     sep.value = '__sep__';
                     sep.textContent = '──────────';
                     sep.disabled = true;
-                    sep.style.color = '#999';
                     templateSelect.appendChild(sep);
-
                     customTemplates.forEach(t => {
                         const opt = document.createElement('option');
                         opt.value = 'custom_' + t.name;
@@ -2215,15 +2418,16 @@
                         templateSelect.appendChild(opt);
                     });
                 }
-
                 templateSelect.value = currentTemplate;
             }
-
             window.saveCustomTemplate = saveCustomTemplate;
 
-            // ==================== 导出JPG ====================
-            async function exportJPG() {
-                showToast('📸 正在生成JPG图片，请稍候...');
+            // ==================== 导出 ====================
+            async function exportImage(format) {
+                const ext = format === 'png' ? 'png' : 'jpg';
+                const mime = format === 'png' ? 'image/png' : 'image/jpeg';
+                const quality = format === 'png' ? 1.0 : 0.95;
+                showToast(`📸 正在生成${ext.toUpperCase()}图片...`);
 
                 const bgDivs = posterContainer.querySelectorAll('.card-image-bg');
                 const loadPromises = Array.from(bgDivs).map(div => {
@@ -2232,54 +2436,43 @@
                     const url = bg.replace(/url\(['"]?/, '').replace(/['"]?\)/, '');
                     const img = new Image();
                     img.src = url;
-                    return new Promise(resolve => {
-                        if (img.complete) resolve();
-                        else {
-                            img.addEventListener('load', resolve);
-                            img.addEventListener('error', resolve);
-                        }
-                    });
+                    return new Promise(resolve => { if (img.complete) resolve();
+                        else { img.addEventListener('load', resolve);
+                            img.addEventListener('error', resolve); } });
                 });
-
                 if (bgImageDataUrl && posterBgOverlay.classList.contains('visible')) {
                     const bgImg = new Image();
                     bgImg.src = bgImageDataUrl;
-                    const bgPromise = new Promise(resolve => {
-                        if (bgImg.complete) resolve();
-                        else {
-                            bgImg.addEventListener('load', resolve);
-                            bgImg.addEventListener('error', resolve);
-                        }
-                    });
-                    loadPromises.push(bgPromise);
+                    loadPromises.push(new Promise(resolve => { if (bgImg.complete) resolve();
+                        else { bgImg.addEventListener('load', resolve);
+                            bgImg.addEventListener('error', resolve); } }));
                 }
-
                 await Promise.all(loadPromises);
-                await new Promise(r => setTimeout(r, 300));
+                await new Promise(r => setTimeout(r, 400));
 
                 try {
                     const dpr = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
                     const canvas = await html2canvas(posterContainer, {
-                        backgroundColor: null,
+                        backgroundColor: format === 'png' ? null : '#ffffff',
                         scale: dpr,
                         useCORS: true,
                         allowTaint: true,
                         logging: false,
                     });
-
                     const link = document.createElement('a');
-                    link.download = `anime-merch-poster_${Date.now()}.jpg`;
-                    link.href = canvas.toDataURL('image/jpeg', 0.95);
+                    link.download = `anime-merch-poster_${Date.now()}.${ext}`;
+                    link.href = canvas.toDataURL(mime, quality);
                     link.click();
-                    showToast('✅ JPG导出成功！');
+                    showToast(`✅ ${ext.toUpperCase()}导出成功！`);
                 } catch (err) {
                     console.error('导出失败:', err);
                     showToast('❌ 导出失败，请重试');
                 }
             }
+            window.exportImage = exportImage;
 
             // ==================== 标题编辑 ====================
-            function setupTitleEditor(el, fieldName) {
+            function setupTitleEditor(el) {
                 el.addEventListener('click', () => {
                     const current = el.textContent;
                     const input = document.createElement('input');
@@ -2287,7 +2480,7 @@
                     input.className = 'inline-edit-input';
                     input.value = current;
                     input.style.textAlign = 'center';
-                    if (fieldName === 'title') {
+                    if (el === posterTitle) {
                         input.style.fontSize = '26px';
                         input.style.fontWeight = '700';
                         input.style.letterSpacing = '3px';
@@ -2301,34 +2494,23 @@
                     el.appendChild(input);
                     input.focus();
                     input.select();
-
-                    const save = () => {
-                        saveHistory();
-                        const val = input.value.trim();
-                        el.textContent = val || current;
+                    const save = () => { saveHistory();
+                        el.textContent = input.value.trim() || current;
                         input.remove();
-                        autoSave();
-                    };
+                        autoSave(); };
                     input.addEventListener('blur', save);
-                    input.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter') input.blur();
-                        if (e.key === 'Escape') {
-                            input.value = current;
-                            input.blur();
-                        }
-                    });
+                    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); if (e.key ===
+                            'Escape') { input.value = current;
+                            input.blur(); } });
                 });
             }
-
-            setupTitleEditor(posterTitle, 'title');
-            setupTitleEditor(posterSubtitle, 'subtitle');
+            setupTitleEditor(posterTitle);
+            setupTitleEditor(posterSubtitle);
 
             // ==================== 事件监听 ====================
             templateSelect.addEventListener('change', () => {
                 const val = templateSelect.value;
                 if (val === '__sep__') return;
-
-                // 检查是否是自定义模板
                 if (val.startsWith('custom_')) {
                     const templateName = val.substring(7);
                     const customTemplates = loadCustomTemplates();
@@ -2338,15 +2520,12 @@
                         currentTemplate = val;
                         colorsOverridden = true;
                         customColors = Object.assign({}, ct.colors);
-                        // 使用第一个内置模板作为基底
                         applyTemplateToDOM('monochrome', customColors, true);
                         renderAllProducts();
                         showToast(`💾 已加载自定义模板「${templateName}」`);
                     }
                     return;
                 }
-
-                // 内置模板
                 if (colorsOverridden && customColorsHaveChanged(val)) {
                     showTemplateConfirm(val);
                 } else {
@@ -2361,37 +2540,62 @@
                 const tpl = TEMPLATES[tplName];
                 if (!tpl) return false;
                 const keys = [
-                    { custom: 'bg', tpl: 'posterBg' },
-                    { custom: 'card', tpl: 'cardBg' },
-                    { custom: 'text', tpl: 'text' },
-                    { custom: 'accent', tpl: 'accent' },
-                    { custom: 'price', tpl: 'priceColor' },
-                    { custom: 'title', tpl: 'titleColor' },
+                    { custom: 'bg', tpl: 'posterBg' }, { custom: 'card', tpl: 'cardBg' },
+                    { custom: 'text', tpl: 'text' }, { custom: 'accent', tpl: 'accent' },
+                    { custom: 'price', tpl: 'priceColor' }, { custom: 'title', tpl: 'titleColor' },
                     { custom: 'subtitle', tpl: 'subtitleColor' },
                 ];
                 for (const k of keys) {
-                    if (customColors[k.custom].toLowerCase() !== (tpl[k.tpl] || '').toLowerCase()) {
-                        return true;
-                    }
+                    if (customColors[k.custom].toLowerCase() !== (tpl[k.tpl] || '').toLowerCase()) return true;
                 }
                 return false;
             }
 
+            sizePresetSelect.addEventListener('change', () => {
+                const val = sizePresetSelect.value;
+                if (val === 'custom') {
+                    currentSizePreset = 'custom';
+                    showToast('🖐 已切换为自定义尺寸');
+                    return;
+                }
+                saveHistory();
+                applySizePreset(val);
+                renderAllProducts();
+                showToast(`📱 已切换至「${SIZE_PRESETS[val].name}」尺寸`);
+            });
+
+            cardRatioSelect.addEventListener('change', () => {
+                saveHistory();
+                cardRatio = parseFloat(cardRatioSelect.value);
+                posterContainer.style.setProperty('--card-ratio', cardRatio);
+                // 解除尺寸预设
+                currentSizePreset = 'custom';
+                sizePresetSelect.value = 'custom';
+                renderAllProducts();
+                autoSave();
+                showToast('📐 卡片比例已更新');
+            });
+
             columnsSlider.addEventListener('input', () => {
                 saveHistory();
+                currentSizePreset = 'custom';
+                sizePresetSelect.value = 'custom';
                 updateLayout();
                 autoSave();
             });
-            gapSlider.addEventListener('input', () => {
-                saveHistory();
+            gapSlider.addEventListener('input', () => { saveHistory();
                 updateLayout();
-                autoSave();
-            });
+                autoSave(); });
             rowWidthSlider.addEventListener('input', () => {
                 saveHistory();
+                currentSizePreset = 'custom';
+                sizePresetSelect.value = 'custom';
                 updateLayout();
                 autoSave();
             });
+            borderRadiusSlider.addEventListener('input', () => { saveHistory();
+                updateLayout();
+                autoSave(); });
 
             colorBg.addEventListener('input', () => applyCustomColor('bg', colorBg.value));
             colorCard.addEventListener('input', () => applyCustomColor('card', colorCard.value));
@@ -2401,36 +2605,24 @@
             colorTitle.addEventListener('input', () => applyCustomColor('title', colorTitle.value));
             colorSubtitle.addEventListener('input', () => applyCustomColor('subtitle', colorSubtitle.value));
 
-            bgOpacitySlider.addEventListener('input', () => {
-                updateBgOpacity(bgOpacitySlider.value);
-            });
+            bgOpacitySlider.addEventListener('input', () => updateBgOpacity(bgOpacitySlider.value));
 
-            // 快捷键
             document.addEventListener('keydown', (e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                    e.preventDefault();
-                    exportJPG();
-                }
-                if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-                    e.preventDefault();
-                    addProduct();
-                }
-                if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-                    e.preventDefault();
-                    undo();
-                }
-                if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
-                    e.preventDefault();
-                    redo();
-                }
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault();
+                    exportImage('jpg'); }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault();
+                    addProduct(); }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault();
+                    undo(); }
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault();
+                    redo(); }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'p') { e.preventDefault();
+                    printPoster(); }
             });
 
             // ==================== 初始化 ====================
             function init() {
-                // 加载自定义模板
                 refreshTemplateSelect();
-
-                // 尝试从 localStorage 恢复
                 const savedState = loadFromStorage();
                 if (savedState) {
                     try {
@@ -2438,24 +2630,31 @@
                         products = JSON.parse(JSON.stringify(savedState.products || DEFAULT_PRODUCTS));
                         nextId = savedState.nextId || 5;
                         currentTemplate = savedState.currentTemplate || 'monochrome';
+                        currentSizePreset = savedState.currentSizePreset || 'custom';
                         columnCount = savedState.columnCount || 3;
                         cardGap = savedState.cardGap || 16;
                         rowWidth = savedState.rowWidth || 900;
-                        customColors = Object.assign({}, savedState.customColors || TEMPLATES['monochrome']);
+                        cardRatio = savedState.cardRatio || 1;
+                        cardBorderRadius = savedState.cardBorderRadius || 8;
+                        customColors = Object.assign({}, savedState.customColors || {});
                         colorsOverridden = savedState.colorsOverridden || false;
                         bgImageDataUrl = savedState.bgImageDataUrl || null;
                         bgImageOpacity = savedState.bgImageOpacity || 0.15;
+                        qrCodeData = Object.assign({}, savedState.qrCodeData || { url: '', label: '' });
                         if (savedState.titleText) posterTitle.textContent = savedState.titleText;
                         if (savedState.subtitleText) posterSubtitle.textContent = savedState.subtitleText;
 
+                        sizePresetSelect.value = currentSizePreset;
+                        cardRatioSelect.value = String(cardRatio);
                         columnsSlider.value = columnCount;
                         gapSlider.value = cardGap;
                         rowWidthSlider.value = rowWidth;
+                        borderRadiusSlider.value = cardBorderRadius;
                         columnsValue.textContent = columnCount;
                         gapValue.textContent = cardGap;
                         rowWidthValue.textContent = rowWidth;
+                        borderRadiusValue.textContent = cardBorderRadius;
 
-                        // 判断 currentTemplate 是内置还是自定义
                         if (currentTemplate.startsWith('custom_')) {
                             const ctName = currentTemplate.substring(7);
                             const customTemplates = loadCustomTemplates();
@@ -2465,7 +2664,6 @@
                                 colorsOverridden = true;
                                 applyTemplateToDOM('monochrome', customColors, true);
                             } else {
-                                // 自定义模板已被删除，回退
                                 currentTemplate = 'monochrome';
                                 applyTemplateToDOM('monochrome', customColors, colorsOverridden);
                             }
@@ -2482,25 +2680,24 @@
                         renderAllProducts();
                         if (bgImageDataUrl) applyBgImage();
                         else clearBgImageDOM();
+                        if (qrCodeData.url) renderQrToPoster();
 
                         historyLocked = false;
                         updateUndoRedoButtons();
-                        showToast('📂 已恢复上次的编辑进度 | Ctrl+Z/Y 撤销重做');
+                        showToast('📂 已恢复上次编辑 | Ctrl+S导出 | Ctrl+Z/Y撤销');
                         return;
                     } catch (e) {
                         console.warn('恢复状态失败:', e);
                         historyLocked = false;
                     }
                 }
-
-                // 默认初始化
                 applyTemplate('monochrome', false);
                 syncColorPickersToCustom();
                 renderAllProducts();
                 updateLayout();
                 clearBgImageDOM();
                 updateUndoRedoButtons();
-                showToast('✨ 海报生成器就绪 | Ctrl+S 导出 | Ctrl+Z/Y 撤销重做');
+                showToast('✨ 海报生成器就绪 | Ctrl+S导出 | Ctrl+P打印');
             }
 
             init();
