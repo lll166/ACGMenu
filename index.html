@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品贩售海报生成器</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js">
+    </script>
+    <style>
+        :root {
+            --poster-bg: #ffffff;
+            --card-bg: #fafafa;
+            --text: #1a1a1a;
+            --text-secondary: #555;
+            --accent: #333333;
+            --border: #cccccc;
+            --price-color: #c0392b;
+            --card-radius: 8px;
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --card-border: 2px solid #ddd;
+            --tag-bg: #eee;
+            --tag-text: #333;
+            --deco-color: #999;
+            --badge-bg: #1a1a1a;
+            --badge-text: #fff;
+            --title-color: #1a1a1a;
+            --poster-border: 2px dashed #ccc;
+            --corner-deco: '◆';
+            --font-title: 'Georgia', 'Noto Serif SC', 'SimSun', serif;
+            --font-body: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            --font-price: 'Georgia', 'Noto Serif SC', serif;
+            --image-area-bg: #eaeaea;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #e8e8e8;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ========== 顶部工具栏 ========== */
+        .toolbar {
+            position: sticky;
+            top: 8px;
+            z-index: 100;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            max-width: 1300px;
+            width: 100%;
+            border: 1px solid #e0e0e0;
+        }
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .toolbar-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+        }
+        .toolbar-group select,
+        .toolbar-group input[type="range"] {
+            cursor: pointer;
+        }
+        .toolbar-group input[type="range"] {
+            width: 100px;
+            accent-color: #444;
+        }
+        .toolbar-group input[type="color"] {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 2px;
+            background: #fff;
+        }
+        .toolbar-divider {
+            width: 1px;
+            height: 28px;
+            background: #ddd;
+            flex-shrink: 0;
+            margin: 0 4px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn-primary {
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #333;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .btn-outline {
+            background: #fff;
+            color: #333;
+            border: 2px solid #ccc;
+        }
+        .btn-outline:hover {
+            border-color: #888;
+            background: #f9f9f9;
+        }
+        .btn-bg-upload {
+            background: #fff;
+            color: #6c5ce7;
+            border: 2px solid #a29bfe;
+        }
+        .btn-bg-upload:hover {
+            background: #f8f7ff;
+            border-color: #6c5ce7;
+        }
+        .btn-bg-upload.has-bg {
+            background: #e8e5ff;
+            border-color: #6c5ce7;
+            color: #4a3db5;
+        }
+        .btn-bg-clear {
+            background: #fff;
+            color: #e74c3c;
+            border: 2px solid #fab1a0;
+            font-size: 11px;
+            padding: 6px 10px;
+        }
+        .btn-bg-clear:hover {
+            background: #fff5f5;
+            border-color: #e74c3c;
+        }
+        .btn-export {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            font-size: 14px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            animation: pulse-export 2.5s ease-in-out infinite;
+        }
+        @keyframes pulse-export {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 0 14px rgba(102, 126, 234, 0);
+            }
+        }
+        .btn-export:hover {
+            animation: none;
+            box-shadow: 0 6px 24px rgba(102, 126, 234, 0.45);
+            transform: translateY(-2px);
+        }
+        .range-value {
+            display: inline-block;
+            min-width: 28px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 13px;
+            color: #333;
+            background: #f5f5f5;
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+        .opacity-value {
+            display: inline-block;
+            min-width: 32px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 12px;
+            color: #6c5ce7;
+            background: #f8f7ff;
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+
+        /* ========== 主海报区域 ========== */
+        .poster-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            max-width: 1400px;
+        }
+        .poster-container {
+            background-color: var(--poster-bg);
+            border-radius: 4px;
+            padding: 32px 28px 24px;
+            width: 100%;
+            max-width: 1000px;
+            transition: all 0.35s ease;
+            position: relative;
+            border: var(--poster-border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            min-height: 300px;
+            overflow: hidden;
+        }
+        .poster-container::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 1px solid var(--deco-color);
+            opacity: 0.25;
+            pointer-events: none;
+            border-radius: 2px;
+            z-index: 0;
+        }
+        /* 背景图片叠加层：使用内联style控制opacity，html2canvas可正确捕获 */
+        .poster-bg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            pointer-events: none;
+            z-index: 0;
+            border-radius: 4px;
+            display: none;
+        }
+        .poster-bg-overlay.visible {
+            display: block;
+        }
+        .poster-inner-deco {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            bottom: 16px;
+            pointer-events: none;
+            opacity: 0.18;
+            border: 1px solid var(--deco-color);
+            border-radius: 1px;
+            z-index: 0;
+        }
+        .poster-title-area {
+            text-align: center;
+            margin-bottom: 22px;
+            position: relative;
+            z-index: 1;
+        }
+        .poster-title {
+            font-family: var(--font-title);
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--title-color);
+            letter-spacing: 3px;
+            margin: 0;
+            display: inline-block;
+            position: relative;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            z-index: 1;
+        }
+        .poster-title:hover {
+            background: rgba(128, 128, 128, 0.1);
+        }
+        .poster-title::after {
+            content: var(--corner-deco);
+            position: absolute;
+            left: -18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: var(--deco-color);
+            opacity: 0.7;
+        }
+        .poster-title::before {
+            content: var(--corner-deco);
+            position: absolute;
+            right: -18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: var(--deco-color);
+            opacity: 0.7;
+        }
+        .poster-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+            margin-top: 4px;
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 3px;
+            transition: background 0.2s;
+            z-index: 1;
+            position: relative;
+        }
+        .poster-subtitle:hover {
+            background: rgba(128, 128, 128, 0.08);
+        }
+
+        /* ========== 商品网格 ========== */
+        .products-grid {
+            display: grid;
+            gap: 16px;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+            transition: all 0.35s ease;
+        }
+        .product-card {
+            background: var(--card-bg);
+            border: var(--card-border);
+            border-radius: var(--card-radius);
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            z-index: 5;
+        }
+        .product-card:hover .card-actions {
+            opacity: 1;
+        }
+
+        .card-image-area {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background-color: var(--image-area-bg);
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            transition: background-color 0.3s;
+        }
+        .card-image-area:hover {
+            background-color: #ddd;
+        }
+        .card-image-bg {
+            width: 100%;
+            height: 100%;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: block;
+        }
+        .card-image-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            color: #aaa;
+            font-size: 13px;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .card-image-placeholder .icon-upload {
+            font-size: 36px;
+            opacity: 0.5;
+        }
+        .card-image-area.has-image .card-image-placeholder {
+            display: none;
+        }
+
+        .card-info {
+            padding: 12px 14px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .card-name {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text);
+            cursor: pointer;
+            padding: 3px 6px;
+            margin: -3px -6px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            line-height: 1.4;
+            word-break: break-word;
+            font-family: var(--font-body);
+        }
+        .card-name:hover {
+            background: rgba(128, 128, 128, 0.1);
+        }
+        .card-price {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--price-color);
+            cursor: pointer;
+            padding: 3px 6px;
+            margin: -3px -6px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            font-family: var(--font-price);
+            letter-spacing: 1px;
+        }
+        .card-price:hover {
+            background: rgba(200, 50, 50, 0.08);
+        }
+        .card-tag {
+            display: inline-block;
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            letter-spacing: 1px;
+            font-weight: 600;
+            align-self: flex-start;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .card-tag:hover {
+            background: var(--tag-text);
+            color: var(--tag-bg);
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+        .card-tag::after {
+            content: ' ✎';
+            font-size: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .card-tag:hover::after {
+            opacity: 0.7;
+        }
+        .card-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: var(--badge-bg);
+            color: var(--badge-text);
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 3px;
+            letter-spacing: 1px;
+            font-weight: 700;
+            z-index: 10;
+            opacity: 0.9;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .card-badge:hover {
+            opacity: 1;
+            transform: scale(1.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        .card-badge::after {
+            content: ' ✎';
+            font-size: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .card-badge:hover::after {
+            opacity: 0.7;
+        }
+        .card-actions {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.25s;
+            z-index: 10;
+        }
+        .card-actions button {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            color: #fff;
+            font-weight: bold;
+        }
+        .btn-del-card {
+            background: rgba(231, 76, 60, 0.85);
+        }
+        .btn-del-card:hover {
+            background: #e74c3c;
+            transform: scale(1.1);
+        }
+        .btn-upload-card {
+            background: rgba(52, 152, 219, 0.85);
+        }
+        .btn-upload-card:hover {
+            background: #3498db;
+            transform: scale(1.1);
+        }
+
+        /* ========== 添加按钮(海报内) ========== */
+        .add-card-placeholder {
+            border: 2px dashed #ccc;
+            border-radius: var(--card-radius);
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(0, 0, 0, 0.015);
+            color: #aaa;
+            font-size: 32px;
+            font-weight: 300;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .add-card-placeholder:hover {
+            border-color: #888;
+            color: #555;
+            background: rgba(0, 0, 0, 0.04);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+        .add-card-placeholder span {
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+
+        /* ========== 内联编辑 ========== */
+        .inline-edit-input {
+            border: 2px solid #667eea;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: inherit;
+            font-weight: inherit;
+            font-family: inherit;
+            color: inherit;
+            background: #fff;
+            outline: none;
+            width: 100%;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+            letter-spacing: inherit;
+            z-index: 20;
+            position: relative;
+        }
+
+        /* ========== Toast ========== */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a1a;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.3s;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.hidden {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+        }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 768px) {
+            .toolbar {
+                padding: 10px;
+                gap: 6px;
+                border-radius: 10px;
+            }
+            .toolbar-group label {
+                font-size: 11px;
+            }
+            .btn {
+                padding: 6px 10px;
+                font-size: 11px;
+                border-radius: 6px;
+            }
+            .poster-container {
+                padding: 16px 10px 12px;
+            }
+            .poster-title {
+                font-size: 20px;
+                letter-spacing: 2px;
+            }
+            .products-grid {
+                gap: 8px;
+            }
+            .card-info {
+                padding: 8px 10px;
+            }
+            .card-name {
+                font-size: 13px;
+            }
+            .card-price {
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toast -->
+    <div class="toast hidden" id="toast"></div>
+
+    <!-- ==================== 工具栏 ==================== -->
+    <div class="toolbar" id="toolbar">
+        <!-- 模板选择 -->
+        <div class="toolbar-group">
+            <label>🎨 模板</label>
+            <select id="templateSelect" style="padding:6px 10px;border-radius:6px;border:2px solid #ddd;font-size:13px;font-weight:600;">
+                <option value="monochrome">⬛ 黑白灰简约</option>
+                <option value="sakura">🌸 樱花梦幻</option>
+                <option value="starry">✨ 星空幻想</option>
+                <option value="mint">🌿 薄荷清风</option>
+                <option value="gothic">🦇 暗夜哥特</option>
+                <option value="cyber">💜 赛博霓虹</option>
+            </select>
+        </div>
+        <div class="toolbar-divider"></div>
+
+        <!-- 背景图片上传 -->
+        <div class="toolbar-group">
+            <label>🖼 背景图</label>
+            <button class="btn btn-bg-upload" id="btnBgUpload" onclick="triggerBgImageUpload()" title="导入海报背景图片">📁 导入</button>
+            <button class="btn btn-bg-clear" id="btnBgClear" onclick="clearBgImage()" title="清除背景图片" style="display:none;">✕ 清除</button>
+            <input type="range" id="bgOpacitySlider" min="5" max="80" value="15" step="1" title="背景图透明度" style="width:60px;display:none;">
+            <span class="opacity-value" id="bgOpacityValue" style="display:none;">15%</span>
+        </div>
+        <div class="toolbar-divider"></div>
+
+        <!-- 列数 -->
+        <div class="toolbar-group">
+            <label>📐 每行列数</label>
+            <input type="range" id="columnsSlider" min="1" max="6" value="3" step="1">
+            <span class="range-value" id="columnsValue">3</span>
+        </div>
+        <div class="toolbar-divider"></div>
+
+        <!-- 行宽 -->
+        <div class="toolbar-group">
+            <label>📏 海报宽度</label>
+            <input type="range" id="rowWidthSlider" min="400" max="1400" value="900" step="20">
+            <span class="range-value" id="rowWidthValue">900</span>px
+        </div>
+        <div class="toolbar-divider"></div>
+
+        <!-- 自定义配色 -->
+        <div class="toolbar-group">
+            <label>背景</label>
+            <input type="color" id="colorBg" value="#ffffff" title="海报背景色">
+        </div>
+        <div class="toolbar-group">
+            <label>卡片</label>
+            <input type="color" id="colorCard" value="#fafafa" title="卡片背景色">
+        </div>
+        <div class="toolbar-group">
+            <label>文字</label>
+            <input type="color" id="colorText" value="#1a1a1a" title="文字颜色">
+        </div>
+        <div class="toolbar-group">
+            <label>强调</label>
+            <input type="color" id="colorAccent" value="#333333" title="强调色/边框色">
+        </div>
+        <div class="toolbar-group">
+            <label>价格</label>
+            <input type="color" id="colorPrice" value="#c0392b" title="价格颜色">
+        </div>
+        <div class="toolbar-divider"></div>
+
+        <!-- 操作按钮 -->
+        <button class="btn btn-primary" onclick="addProduct()" title="添加新商品">＋ 添加商品</button>
+        <button class="btn btn-outline" onclick="resetAll()" title="恢复默认">↺ 重置</button>
+        <button class="btn btn-export" onclick="exportJPG()" title="导出为JPG图片">📸 导出JPG</button>
+    </div>
+
+    <!-- ==================== 海报区域 ==================== -->
+    <div class="poster-wrapper">
+        <div class="poster-container" id="posterContainer">
+            <!-- 背景图片叠加层：透明度通过内联style直接设置，html2canvas可正确捕获 -->
+            <div class="poster-bg-overlay" id="posterBgOverlay"></div>
+            <div class="poster-inner-deco"></div>
+            <div class="poster-title-area">
+                <div class="poster-title" id="posterTitle" title="点击编辑标题">✦ 商 品 贩 售 ✦</div>
+                <div class="poster-subtitle" id="posterSubtitle" title="点击编辑副标题">— 这里是小标题 —</div>
+            </div>
+            <div class="products-grid" id="productsGrid">
+                <!-- 动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ==================== 全局状态 ====================
+            const DEFAULT_PRODUCTS = [
+                { id: 1, name: '百日战纪 亚克力立牌', price: '¥1?9', image: null, tag: '新品', badge: 'HOT' },
+                { id: 2, name: '苍澄 全套吧唧', price: '¥99', image: null, tag: '限定', badge: '' },
+                { id: 3, name: '苍澄 明信片套装', price: '¥40', image: null, tag: '特典', badge: 'NEW' },
+                { id: 4, name: '苍澄 挂件', price: '¥149', image: null, tag: '预售', badge: '' },
+            ];
+
+            let products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+            let nextId = 5;
+            let currentTemplate = 'monochrome';
+            let columnCount = 3;
+            let rowWidth = 900;
+            let customColors = {
+                bg: '#ffffff',
+                card: '#fafafa',
+                text: '#1a1a1a',
+                accent: '#333333',
+                price: '#c0392b',
+            };
+            let colorsOverridden = false;
+            let bgImageDataUrl = null;
+            let bgImageOpacity = 0.15;
+
+            // ==================== 模板定义 ====================
+            const TEMPLATES = {
+                monochrome: {
+                    name: '黑白灰简约',
+                    posterBg: '#ffffff',
+                    cardBg: '#fafafa',
+                    text: '#1a1a1a',
+                    textSecondary: '#555',
+                    accent: '#333333',
+                    border: '#cccccc',
+                    priceColor: '#c0392b',
+                    cardRadius: '8px',
+                    cardShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    cardBorder: '2px solid #ddd',
+                    tagBg: '#eee',
+                    tagText: '#333',
+                    badgeBg: '#1a1a1a',
+                    badgeText: '#fff',
+                    decoColor: '#999',
+                    titleColor: '#1a1a1a',
+                    posterBorder: '2px dashed #ccc',
+                    cornerDeco: '"◆"',
+                    fontTitle: '"Georgia","Noto Serif SC","SimSun",serif',
+                    fontBody: '"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif',
+                    fontPrice: '"Georgia","Noto Serif SC",serif',
+                    imageAreaBg: '#eaeaea',
+                },
+                sakura: {
+                    name: '樱花梦幻',
+                    posterBg: '#fff5f7',
+                    cardBg: '#ffffff',
+                    text: '#4a2c3e',
+                    textSecondary: '#8b6b7d',
+                    accent: '#e8a0b4',
+                    border: '#f0c4d3',
+                    priceColor: '#d4687c',
+                    cardRadius: '14px',
+                    cardShadow: '0 4px 16px rgba(200,140,160,0.2)',
+                    cardBorder: '2px solid #f5d5df',
+                    tagBg: '#fde8ee',
+                    tagText: '#b8456a',
+                    badgeBg: '#e8a0b4',
+                    badgeText: '#fff',
+                    decoColor: '#f0c4d3',
+                    titleColor: '#6b3a4e',
+                    posterBorder: '2px solid #f5d5df',
+                    cornerDeco: '"🌸"',
+                    fontTitle: '"Georgia","Noto Serif SC","KaiTi",serif',
+                    fontBody: '"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif',
+                    fontPrice: '"Georgia","Noto Serif SC",serif',
+                    imageAreaBg: '#fef0f3',
+                },
+                starry: {
+                    name: '星空幻想',
+                    posterBg: '#1a1c3b',
+                    cardBg: '#252850',
+                    text: '#e8e6f0',
+                    textSecondary: '#b0adc8',
+                    accent: '#c9a84c',
+                    border: '#3d4070',
+                    priceColor: '#f0c060',
+                    cardRadius: '10px',
+                    cardShadow: '0 4px 20px rgba(20,18,50,0.5)',
+                    cardBorder: '1px solid #4a4d80',
+                    tagBg: '#3a3560',
+                    tagText: '#d4c88c',
+                    badgeBg: '#c9a84c',
+                    badgeText: '#1a1c3b',
+                    decoColor: '#5a5d90',
+                    titleColor: '#f0e6c8',
+                    posterBorder: '2px solid #3d4070',
+                    cornerDeco: '"✦"',
+                    fontTitle: '"Georgia","Noto Serif SC","SimSun",serif',
+                    fontBody: '"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif',
+                    fontPrice: '"Georgia","Noto Serif SC",serif',
+                    imageAreaBg: '#1e2038',
+                },
+                mint: {
+                    name: '薄荷清风',
+                    posterBg: '#f5fcf9',
+                    cardBg: '#ffffff',
+                    text: '#2c4a3e',
+                    textSecondary: '#6b8b7a',
+                    accent: '#7ecba1',
+                    border: '#c8e6d4',
+                    priceColor: '#3d8b63',
+                    cardRadius: '12px',
+                    cardShadow: '0 3px 14px rgba(100,180,140,0.15)',
+                    cardBorder: '2px solid #d4f0e0',
+                    tagBg: '#e6f7ee',
+                    tagText: '#3d8b63',
+                    badgeBg: '#7ecba1',
+                    badgeText: '#fff',
+                    decoColor: '#b8dcc8',
+                    titleColor: '#2c4a3e',
+                    posterBorder: '2px solid #d4f0e0',
+                    cornerDeco: '"🌿"',
+                    fontTitle: '"Georgia","Noto Serif SC","KaiTi",serif',
+                    fontBody: '"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif',
+                    fontPrice: '"Georgia","Noto Serif SC",serif',
+                    imageAreaBg: '#eaf5ef',
+                },
+                gothic: {
+                    name: '暗夜哥特',
+                    posterBg: '#1a1a1a',
+                    cardBg: '#252525',
+                    text: '#d4d4d4',
+                    textSecondary: '#999',
+                    accent: '#8b3a62',
+                    border: '#3a3a3a',
+                    priceColor: '#c96b8c',
+                    cardRadius: '4px',
+                    cardShadow: '0 4px 16px rgba(0,0,0,0.6)',
+                    cardBorder: '1px solid #444',
+                    tagBg: '#333',
+                    tagText: '#c96b8c',
+                    badgeBg: '#8b3a62',
+                    badgeText: '#e0d0d8',
+                    decoColor: '#555',
+                    titleColor: '#d4c0c8',
+                    posterBorder: '2px solid #3a3a3a',
+                    cornerDeco: '"†"',
+                    fontTitle: '"Georgia","Noto Serif SC","SimSun",serif',
+                    fontBody: '"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif',
+                    fontPrice: '"Georgia","Noto Serif SC",serif',
+                    imageAreaBg: '#1e1e1e',
+                },
+                cyber: {
+                    name: '赛博霓虹',
+                    posterBg: '#0d0d1a',
+                    cardBg: '#151530',
+                    text: '#e0e0f0',
+                    textSecondary: '#9999cc',
+                    accent: '#00e5ff',
+                    border: '#2a2a50',
+                    priceColor: '#ff6ec7',
+                    cardRadius: '6px',
+                    cardShadow: '0 0 20px rgba(0,200,255,0.2), 0 4px 12px rgba(0,0,0,0.5)',
+                    cardBorder: '1px solid #3a3a60',
+                    tagBg: '#1e1e40',
+                    tagText: '#00e5ff',
+                    badgeBg: '#ff6ec7',
+                    badgeText: '#0d0d1a',
+                    decoColor: '#444480',
+                    titleColor: '#00e5ff',
+                    posterBorder: '2px solid #3a3a60',
+                    cornerDeco: '"💠"',
+                    fontTitle: '"Consolas","Noto Serif SC","SimSun",monospace',
+                    fontBody: '"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif',
+                    fontPrice: '"Consolas","Noto Serif SC",monospace',
+                    imageAreaBg: '#111128',
+                },
+            };
+
+            // ==================== DOM引用 ====================
+            const posterContainer = document.getElementById('posterContainer');
+            const posterBgOverlay = document.getElementById('posterBgOverlay');
+            const productsGrid = document.getElementById('productsGrid');
+            const posterTitle = document.getElementById('posterTitle');
+            const posterSubtitle = document.getElementById('posterSubtitle');
+            const templateSelect = document.getElementById('templateSelect');
+            const columnsSlider = document.getElementById('columnsSlider');
+            const columnsValue = document.getElementById('columnsValue');
+            const rowWidthSlider = document.getElementById('rowWidthSlider');
+            const rowWidthValue = document.getElementById('rowWidthValue');
+            const colorBg = document.getElementById('colorBg');
+            const colorCard = document.getElementById('colorCard');
+            const colorText = document.getElementById('colorText');
+            const colorAccent = document.getElementById('colorAccent');
+            const colorPrice = document.getElementById('colorPrice');
+            const toast = document.getElementById('toast');
+            const btnBgUpload = document.getElementById('btnBgUpload');
+            const btnBgClear = document.getElementById('btnBgClear');
+            const bgOpacitySlider = document.getElementById('bgOpacitySlider');
+            const bgOpacityValue = document.getElementById('bgOpacityValue');
+
+            // ==================== Toast ====================
+            let toastTimer;
+
+            function showToast(msg) {
+                clearTimeout(toastTimer);
+                toast.textContent = msg;
+                toast.classList.remove('hidden');
+                toast.classList.add('show');
+                toastTimer = setTimeout(() => {
+                    toast.classList.remove('show');
+                    toast.classList.add('hidden');
+                }, 1800);
+            }
+
+            // ==================== 背景图片管理 ====================
+            // 核心修复：通过内联style直接设置opacity和backgroundImage，
+            // html2canvas可正确捕获内联样式，避免CSS自定义属性在导出时丢失。
+
+            function triggerBgImageUpload() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.style.display = 'none';
+                document.body.appendChild(input);
+
+                input.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) {
+                        document.body.removeChild(input);
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        bgImageDataUrl = ev.target.result;
+                        applyBgImage();
+                        showToast('🖼 背景图片已导入');
+                        document.body.removeChild(input);
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                input.click();
+            }
+
+            function applyBgImage() {
+                if (!bgImageDataUrl) return;
+                // 直接设置内联style：backgroundImage 和 opacity
+                posterBgOverlay.style.backgroundImage = `url('${bgImageDataUrl}')`;
+                posterBgOverlay.style.opacity = bgImageOpacity;
+                posterBgOverlay.classList.add('visible');
+
+                btnBgUpload.classList.add('has-bg');
+                btnBgUpload.textContent = '📁 更换';
+                btnBgClear.style.display = 'flex';
+                bgOpacitySlider.style.display = 'inline-block';
+                bgOpacityValue.style.display = 'inline-block';
+                bgOpacitySlider.value = Math.round(bgImageOpacity * 100);
+                bgOpacityValue.textContent = Math.round(bgImageOpacity * 100) + '%';
+            }
+
+            function clearBgImage() {
+                bgImageDataUrl = null;
+                posterBgOverlay.style.backgroundImage = '';
+                posterBgOverlay.style.opacity = '0';
+                posterBgOverlay.classList.remove('visible');
+                btnBgUpload.classList.remove('has-bg');
+                btnBgUpload.textContent = '📁 导入';
+                btnBgClear.style.display = 'none';
+                bgOpacitySlider.style.display = 'none';
+                bgOpacityValue.style.display = 'none';
+                showToast('🗑 背景图片已清除');
+            }
+
+            function updateBgOpacity(value) {
+                bgImageOpacity = parseInt(value) / 100;
+                // 直接设置内联opacity，确保导出时正确捕获
+                posterBgOverlay.style.opacity = bgImageOpacity;
+                bgOpacityValue.textContent = value + '%';
+            }
+
+            // 暴露到全局
+            window.triggerBgImageUpload = triggerBgImageUpload;
+            window.clearBgImage = clearBgImage;
+
+            // ==================== 应用模板 ====================
+            function applyTemplate(tplName) {
+                const tpl = TEMPLATES[tplName];
+                if (!tpl) return;
+                currentTemplate = tplName;
+
+                if (!colorsOverridden) {
+                    customColors.bg = tpl.posterBg;
+                    customColors.card = tpl.cardBg;
+                    customColors.text = tpl.text;
+                    customColors.accent = tpl.accent;
+                    customColors.price = tpl.priceColor;
+                    syncColorPickersToCustom();
+                }
+
+                const root = posterContainer.style;
+                root.setProperty('--poster-bg', customColors.bg);
+                root.setProperty('--card-bg', customColors.card);
+                root.setProperty('--text', customColors.text);
+                root.setProperty('--text-secondary', tpl.textSecondary);
+                root.setProperty('--accent', customColors.accent);
+                root.setProperty('--border', tpl.border);
+                root.setProperty('--price-color', customColors.price);
+                root.setProperty('--card-radius', tpl.cardRadius);
+                root.setProperty('--card-shadow', tpl.cardShadow);
+                root.setProperty('--card-border', tpl.cardBorder);
+                root.setProperty('--tag-bg', tpl.tagBg);
+                root.setProperty('--tag-text', tpl.tagText);
+                root.setProperty('--badge-bg', tpl.badgeBg);
+                root.setProperty('--badge-text', tpl.badgeText);
+                root.setProperty('--deco-color', tpl.decoColor);
+                root.setProperty('--title-color', tpl.titleColor);
+                root.setProperty('--poster-border', tpl.posterBorder);
+                root.setProperty('--corner-deco', tpl.cornerDeco);
+                root.setProperty('--font-title', tpl.fontTitle);
+                root.setProperty('--font-body', tpl.fontBody);
+                root.setProperty('--font-price', tpl.fontPrice);
+                root.setProperty('--image-area-bg', tpl.imageAreaBg || '#eaeaea');
+
+                if (!colorsOverridden) syncColorPickersToCustom();
+
+                // 模板切换后保持背景图片
+                if (bgImageDataUrl) {
+                    applyBgImage();
+                }
+            }
+
+            function syncColorPickersToCustom() {
+                colorBg.value = customColors.bg;
+                colorCard.value = customColors.card;
+                colorText.value = customColors.text;
+                colorAccent.value = customColors.accent;
+                colorPrice.value = customColors.price;
+            }
+
+            function applyCustomColor(which, value) {
+                colorsOverridden = true;
+                customColors[which] = value;
+                const map = {
+                    bg: '--poster-bg',
+                    card: '--card-bg',
+                    text: '--text',
+                    accent: '--accent',
+                    price: '--price-color',
+                };
+                posterContainer.style.setProperty(map[which], value);
+            }
+
+            // ==================== 更新布局 ====================
+            function updateLayout() {
+                columnCount = parseInt(columnsSlider.value);
+                rowWidth = parseInt(rowWidthSlider.value);
+                columnsValue.textContent = columnCount;
+                rowWidthValue.textContent = rowWidth;
+
+                posterContainer.style.maxWidth = rowWidth + 'px';
+                productsGrid.style.gridTemplateColumns = `repeat(${columnCount}, 1fr)`;
+            }
+
+            // ==================== 渲染产品卡片 ====================
+            function renderAllProducts() {
+                productsGrid.innerHTML = '';
+
+                products.forEach((prod, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.setAttribute('data-id', prod.id);
+                    card.setAttribute('data-index', index);
+                    card.draggable = true;
+
+                    // Badge
+                    let badgeHTML = '';
+                    if (prod.badge && prod.badge.trim()) {
+                        badgeHTML =
+                            `<div class="card-badge" data-action="edit-badge" data-id="${prod.id}" title="点击编辑角标">${escapeHTML(prod.badge)}</div>`;
+                    } else {
+                        badgeHTML =
+                            `<div class="card-badge" data-action="edit-badge" data-id="${prod.id}" title="点击添加角标" style="background:transparent;color:transparent;opacity:0.5;border:1px dashed #ccc;">+</div>`;
+                    }
+
+                    const hasImage = prod.image && prod.image.trim();
+                    const imgContentHTML = hasImage ?
+                        `<div class="card-image-bg" style="background-image: url('${prod.image}');"></div>` :
+                        '';
+
+                    const placeholderHTML = hasImage ?
+                        '' :
+                        `<div class="card-image-placeholder">
+                                <span class="icon-upload">📷</span>
+                                <span>点击上传</span>
+                            </div>`;
+
+                    // Tag
+                    const tagHTML = prod.tag ?
+                        `<span class="card-tag" data-action="edit-tag" data-id="${prod.id}" title="点击编辑标签">${escapeHTML(prod.tag)}</span>` :
+                        `<span class="card-tag" data-action="edit-tag" data-id="${prod.id}" title="点击添加标签" style="background:transparent;color:#aaa;border:1px dashed #ccc;">+ 标签</span>`;
+
+                    card.innerHTML = `
+                            ${badgeHTML}
+                            <div class="card-actions">
+                                <button class="btn-upload-card" title="上传图片" onclick="event.stopPropagation();triggerImageUpload(${prod.id})">🖼</button>
+                                <button class="btn-del-card" title="删除商品" onclick="event.stopPropagation();deleteProduct(${prod.id})">✕</button>
+                            </div>
+                            <div class="card-image-area ${hasImage ? 'has-image' : ''}" data-action="upload" data-id="${prod.id}">
+                                ${imgContentHTML}
+                                ${placeholderHTML}
+                            </div>
+                            <div class="card-info">
+                                <div class="card-name" data-action="edit-name" data-id="${prod.id}">${escapeHTML(prod.name)}</div>
+                                ${tagHTML}
+                                <div class="card-price" data-action="edit-price" data-id="${prod.id}">${escapeHTML(prod.price)}</div>
+                            </div>
+                        `;
+
+                    // 事件绑定
+                    const imgArea = card.querySelector('.card-image-area');
+                    imgArea.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        triggerImageUpload(prod.id);
+                    });
+
+                    const nameEl = card.querySelector('.card-name');
+                    nameEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        editInline(nameEl, 'name', prod.id);
+                    });
+
+                    const priceEl = card.querySelector('.card-price');
+                    priceEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        editInline(priceEl, 'price', prod.id);
+                    });
+
+                    const tagEl = card.querySelector('.card-tag');
+                    if (tagEl) {
+                        tagEl.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            editInline(tagEl, 'tag', prod.id);
+                        });
+                    }
+
+                    const badgeEl = card.querySelector('.card-badge');
+                    if (badgeEl) {
+                        badgeEl.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            editInline(badgeEl, 'badge', prod.id);
+                        });
+                    }
+
+                    card.addEventListener('dragstart', handleDragStart);
+                    card.addEventListener('dragover', handleDragOver);
+                    card.addEventListener('dragenter', handleDragEnter);
+                    card.addEventListener('dragleave', handleDragLeave);
+                    card.addEventListener('drop', handleDrop);
+                    card.addEventListener('dragend', handleDragEnd);
+
+                    productsGrid.appendChild(card);
+                });
+
+                // 添加占位按钮
+                const addPlaceholder = document.createElement('div');
+                addPlaceholder.className = 'add-card-placeholder';
+                addPlaceholder.innerHTML = '<span>＋</span><span>添加商品</span>';
+                addPlaceholder.addEventListener('click', () => addProduct());
+                productsGrid.appendChild(addPlaceholder);
+
+                if (bgImageDataUrl) {
+                    applyBgImage();
+                }
+
+                updateLayout();
+            }
+
+            function escapeHTML(str) {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            // ==================== 内联编辑 ====================
+            function editInline(element, field, productId) {
+                if (element.querySelector('input')) return;
+
+                const prod = products.find(p => p.id === productId);
+                if (!prod) return;
+
+                const originalText = prod[field] || '';
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'inline-edit-input';
+                input.value = originalText;
+                input.style.width = '100%';
+                input.style.minWidth = '60px';
+
+                if (field === 'tag') {
+                    input.style.fontSize = '10px';
+                    input.style.padding = '2px 6px';
+                    input.style.letterSpacing = '1px';
+                    input.style.fontWeight = '600';
+                }
+                if (field === 'badge') {
+                    input.style.fontSize = '10px';
+                    input.style.padding = '2px 6px';
+                    input.style.letterSpacing = '1px';
+                    input.style.fontWeight = '700';
+                }
+
+                element.textContent = '';
+                element.appendChild(input);
+                input.focus();
+                input.select();
+
+                const save = () => {
+                    let newVal = input.value.trim();
+                    if (field === 'badge' || field === 'tag') {
+                        prod[field] = newVal;
+                    } else {
+                        if (newVal) {
+                            prod[field] = newVal;
+                        } else {
+                            newVal = originalText;
+                        }
+                    }
+                    input.remove();
+                    renderAllProducts();
+                };
+
+                input.addEventListener('blur', save);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') input.blur();
+                    if (e.key === 'Escape') {
+                        input.value = originalText;
+                        input.blur();
+                    }
+                });
+            }
+
+            // ==================== 图片上传 ====================
+            function triggerImageUpload(productId) {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.style.display = 'none';
+                document.body.appendChild(input);
+
+                input.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) {
+                        document.body.removeChild(input);
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const prod = products.find(p => p.id === productId);
+                        if (prod) {
+                            prod.image = ev.target.result;
+                            renderAllProducts();
+                            showToast('✅ 图片已上传（完整显示，留白适配）');
+                        }
+                        document.body.removeChild(input);
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                input.click();
+            }
+
+            window.triggerImageUpload = triggerImageUpload;
+
+            // ==================== 添加/删除商品 ====================
+            function addProduct() {
+                const newProd = {
+                    id: nextId++,
+                    name: '新商品名称',
+                    price: '¥000',
+                    image: null,
+                    tag: '',
+                    badge: '',
+                };
+                products.push(newProd);
+                renderAllProducts();
+                showToast('➕ 已添加新商品');
+            }
+
+            function deleteProduct(productId) {
+                if (products.length <= 1) {
+                    showToast('⚠️ 至少保留一个商品');
+                    return;
+                }
+                products = products.filter(p => p.id !== productId);
+                renderAllProducts();
+                showToast('🗑 已删除商品');
+            }
+
+            function resetAll() {
+                products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+                nextId = 5;
+                colorsOverridden = false;
+                currentTemplate = 'monochrome';
+                templateSelect.value = 'monochrome';
+                columnCount = 3;
+                rowWidth = 900;
+                columnsSlider.value = 3;
+                rowWidthSlider.value = 900;
+                columnsValue.textContent = '3';
+                rowWidthValue.textContent = '900';
+                posterTitle.textContent = '✦ 商 品 贩 售 ✦';
+                posterSubtitle.textContent = '— Anime Merch Collection —';
+                bgImageDataUrl = null;
+                bgImageOpacity = 0.15;
+                clearBgImage();
+                applyTemplate('monochrome');
+                syncColorPickersToCustom();
+                renderAllProducts();
+                updateLayout();
+                showToast('↺ 已恢复默认设置');
+            }
+
+            window.addProduct = addProduct;
+            window.deleteProduct = deleteProduct;
+            window.resetAll = resetAll;
+            window.exportJPG = exportJPG;
+
+            // ==================== 拖拽排序 ====================
+            let dragSrcIndex = null;
+
+            function handleDragStart(e) {
+                dragSrcIndex = parseInt(this.getAttribute('data-index'));
+                this.style.opacity = '0.5';
+                this.style.transform = 'scale(0.95)';
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', dragSrcIndex);
+            }
+
+            function handleDragOver(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            }
+
+            function handleDragEnter(e) {
+                e.preventDefault();
+                this.style.outline = '2px solid #667eea';
+                this.style.outlineOffset = '-2px';
+            }
+
+            function handleDragLeave(e) {
+                this.style.outline = '';
+                this.style.outlineOffset = '';
+            }
+
+            function handleDrop(e) {
+                e.preventDefault();
+                this.style.outline = '';
+                this.style.outlineOffset = '';
+                const targetIndex = parseInt(this.getAttribute('data-index'));
+                if (dragSrcIndex !== null && targetIndex !== null && dragSrcIndex !== targetIndex) {
+                    const moved = products.splice(dragSrcIndex, 1)[0];
+                    products.splice(targetIndex, 0, moved);
+                    renderAllProducts();
+                    showToast('🔄 排序已更新');
+                }
+                dragSrcIndex = null;
+            }
+
+            function handleDragEnd(e) {
+                this.style.opacity = '';
+                this.style.transform = '';
+                document.querySelectorAll('.product-card').forEach(c => {
+                    c.style.outline = '';
+                    c.style.outlineOffset = '';
+                });
+                dragSrcIndex = null;
+            }
+
+            // ==================== 导出JPG ====================
+            async function exportJPG() {
+                showToast('📸 正在生成JPG图片，请稍候...');
+
+                // 等待所有背景图片加载
+                const bgDivs = posterContainer.querySelectorAll('.card-image-bg');
+                const loadPromises = Array.from(bgDivs).map(div => {
+                    const bg = div.style.backgroundImage;
+                    if (!bg || bg === 'none') return Promise.resolve();
+                    const url = bg.replace(/url\(['"]?/, '').replace(/['"]?\)/, '');
+                    const img = new Image();
+                    img.src = url;
+                    return new Promise(resolve => {
+                        if (img.complete) resolve();
+                        else {
+                            img.addEventListener('load', resolve);
+                            img.addEventListener('error', resolve);
+                        }
+                    });
+                });
+
+                // 等待海报背景图加载
+                if (bgImageDataUrl && posterBgOverlay.classList.contains('visible')) {
+                    const bgImg = new Image();
+                    bgImg.src = bgImageDataUrl;
+                    const bgPromise = new Promise(resolve => {
+                        if (bgImg.complete) resolve();
+                        else {
+                            bgImg.addEventListener('load', resolve);
+                            bgImg.addEventListener('error', resolve);
+                        }
+                    });
+                    loadPromises.push(bgPromise);
+                }
+
+                await Promise.all(loadPromises);
+                await new Promise(r => setTimeout(r, 300));
+
+                try {
+                    const canvas = await html2canvas(posterContainer, {
+                        backgroundColor: null,
+                        scale: Math.max(1, window.devicePixelRatio || 1),
+                        useCORS: true,
+                        allowTaint: true,
+                        logging: false,
+                    });
+
+                    // 导出为JPG，质量0.95
+                    const link = document.createElement('a');
+                    link.download = `anime-merch-poster_${Date.now()}.jpg`;
+                    link.href = canvas.toDataURL('image/jpeg', 0.95);
+                    link.click();
+                    showToast('✅ JPG导出成功！背景透明度已正确适配');
+                } catch (err) {
+                    console.error('导出失败:', err);
+                    showToast('❌ 导出失败，请重试');
+                }
+            }
+
+            // ==================== 标题编辑 ====================
+            posterTitle.addEventListener('click', () => {
+                const current = posterTitle.textContent;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'inline-edit-input';
+                input.value = current;
+                input.style.textAlign = 'center';
+                input.style.fontSize = '26px';
+                input.style.fontWeight = '700';
+                input.style.letterSpacing = '3px';
+                input.style.maxWidth = '400px';
+                posterTitle.textContent = '';
+                posterTitle.appendChild(input);
+                input.focus();
+                input.select();
+
+                const save = () => {
+                    const val = input.value.trim();
+                    posterTitle.textContent = val || current;
+                    input.remove();
+                };
+                input.addEventListener('blur', save);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') input.blur();
+                    if (e.key === 'Escape') {
+                        input.value = current;
+                        input.blur();
+                    }
+                });
+            });
+
+            posterSubtitle.addEventListener('click', () => {
+                const current = posterSubtitle.textContent;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'inline-edit-input';
+                input.value = current;
+                input.style.textAlign = 'center';
+                input.style.fontSize = '12px';
+                input.style.letterSpacing = '2px';
+                input.style.maxWidth = '350px';
+                posterSubtitle.textContent = '';
+                posterSubtitle.appendChild(input);
+                input.focus();
+                input.select();
+
+                const save = () => {
+                    const val = input.value.trim();
+                    posterSubtitle.textContent = val || current;
+                    input.remove();
+                };
+                input.addEventListener('blur', save);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') input.blur();
+                    if (e.key === 'Escape') {
+                        input.value = current;
+                        input.blur();
+                    }
+                });
+            });
+
+            // ==================== 事件监听 ====================
+            templateSelect.addEventListener('change', () => {
+                colorsOverridden = false;
+                applyTemplate(templateSelect.value);
+                renderAllProducts();
+                showToast(`🎨 已切换至「${TEMPLATES[templateSelect.value].name}」模板`);
+            });
+
+            columnsSlider.addEventListener('input', () => updateLayout());
+            rowWidthSlider.addEventListener('input', () => updateLayout());
+
+            colorBg.addEventListener('input', () => applyCustomColor('bg', colorBg.value));
+            colorCard.addEventListener('input', () => applyCustomColor('card', colorCard.value));
+            colorText.addEventListener('input', () => applyCustomColor('text', colorText.value));
+            colorAccent.addEventListener('input', () => applyCustomColor('accent', colorAccent.value));
+            colorPrice.addEventListener('input', () => applyCustomColor('price', colorPrice.value));
+
+            bgOpacitySlider.addEventListener('input', () => {
+                updateBgOpacity(bgOpacitySlider.value);
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    exportJPG();
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                    e.preventDefault();
+                    addProduct();
+                }
+            });
+
+            // ==================== 初始化 ====================
+            function init() {
+                applyTemplate('monochrome');
+                syncColorPickersToCustom();
+                renderAllProducts();
+                updateLayout();
+                btnBgClear.style.display = 'none';
+                bgOpacitySlider.style.display = 'none';
+                bgOpacityValue.style.display = 'none';
+                showToast('✨ 海报生成器就绪 | Ctrl+S 导出JPG | Ctrl+N 添加商品');
+            }
+
+            init();
+        })();
+    </script>
+</body>
+</html>
