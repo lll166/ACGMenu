@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>商品贩售海报生成器 - Anime Merch Poster Maker</title>
+    <title>商品贩售海报生成器</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js">
     </script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js">
@@ -1163,7 +1163,7 @@
             let columnCount = 3;
             let cardGap = 16;
             let rowWidth = 900;
-            let cardRatio = 1; // aspect-ratio 值
+            let cardRatio = 1;
             let cardBorderRadius = 8;
             let customColors = {
                 bg: '#ffffff',
@@ -1874,7 +1874,7 @@
                     if (descEl) descEl.addEventListener('click', (e) => { e.stopPropagation();
                         editInline(descEl, 'description', prod.id); });
 
-                    // 标签编辑（点击任意 tag 编辑整组标签）
+                    // 标签编辑
                     const tagEls = card.querySelectorAll('.card-tag');
                     tagEls.forEach(tagEl => {
                         tagEl.addEventListener('click', (e) => { e.stopPropagation();
@@ -2318,7 +2318,6 @@
                     '<div class="qr-container"><div id="qrCodeTarget"></div><span class="qr-label" title="点击编辑标签">' +
                     escapeHTML(qrCodeData.label) + '</span></div>';
 
-                // 生成 QR
                 const target = document.getElementById('qrCodeTarget');
                 if (target && typeof QRCode !== 'undefined') {
                     new QRCode(target, {
@@ -2334,7 +2333,6 @@
                 btnQrCode.classList.add('has-qr');
                 btnClearQr.style.display = 'flex';
 
-                // 标签编辑
                 const labelEl = posterQrArea.querySelector('.qr-label');
                 if (labelEl) {
                     labelEl.addEventListener('click', () => {
@@ -2429,6 +2427,12 @@
                 const quality = format === 'png' ? 1.0 : 0.95;
                 showToast(`📸 正在生成${ext.toUpperCase()}图片...`);
 
+                // ★ 导出前：隐藏"添加商品"占位按钮，使其不出现在导出图片中
+                const addPlaceholder = productsGrid.querySelector('.add-card-placeholder');
+                if (addPlaceholder) {
+                    addPlaceholder.style.display = 'none';
+                }
+
                 const bgDivs = posterContainer.querySelectorAll('.card-image-bg');
                 const loadPromises = Array.from(bgDivs).map(div => {
                     const bg = div.style.backgroundImage;
@@ -2467,6 +2471,11 @@
                 } catch (err) {
                     console.error('导出失败:', err);
                     showToast('❌ 导出失败，请重试');
+                } finally {
+                    // ★ 导出完成后：恢复"添加商品"占位按钮
+                    if (addPlaceholder) {
+                        addPlaceholder.style.display = '';
+                    }
                 }
             }
             window.exportImage = exportImage;
@@ -2568,7 +2577,6 @@
                 saveHistory();
                 cardRatio = parseFloat(cardRatioSelect.value);
                 posterContainer.style.setProperty('--card-ratio', cardRatio);
-                // 解除尺寸预设
                 currentSizePreset = 'custom';
                 sizePresetSelect.value = 'custom';
                 renderAllProducts();
