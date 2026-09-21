@@ -135,6 +135,44 @@
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
         }
+        .color-group {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 3px;
+        }
+        .color-swatches,
+        .color-role-labels {
+            display: flex;
+            gap: 6px;
+        }
+        .color-role-labels span {
+            width: 32px;
+            font-size: 9px;
+            line-height: 1;
+            text-align: center;
+            color: #8a8a8a;
+            letter-spacing: 0;
+            white-space: nowrap;
+        }
+        .color-swatch {
+            display: flex;
+            border-radius: 8px;
+            cursor: grab;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .color-swatch:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+        }
+        .color-swatch:active {
+            cursor: grabbing;
+        }
+        .color-swatch.dragging {
+            opacity: 0.35;
+        }
+        .color-swatch input[type="color"] {
+            cursor: grab;
+        }
         .toolbar-divider {
             width: 1px;
             height: 22px;
@@ -1129,17 +1167,28 @@
         </div>
         <div class="toolbar-divider"></div>
 
-        <!-- 配色 -->
-        <div class="toolbar-group">
-            <input type="color" id="colorBg" value="#ffffff" title="背景">
-            <input type="color" id="colorCard" value="#fafafa" title="卡片">
-            <input type="color" id="colorText" value="#1a1a1a" title="文字">
-            <input type="color" id="colorAccent" value="#333333" title="强调">
-            <input type="color" id="colorPrice" value="#c0392b" title="价格">
-            <input type="color" id="colorTitle" value="#1a1a1a" title="标题">
-            <input type="color" id="colorSubtitle" value="#555555" title="副标题">
-            <button class="btn btn-outline" id="btnPickColor" onclick="pickColorsFromImage()" title="上传一张图片，自动提取图中配色">图片取色</button>
+        <!-- 配色（拖动色板可调整各位置的颜色，位置决定角色） -->
+        <div class="toolbar-group color-group">
+            <div class="color-swatches" id="colorSwatches">
+                <label class="color-swatch" draggable="true" title="拖动可调整各位置对应的颜色"><input type="color" value="#ffffff"></label>
+                <label class="color-swatch" draggable="true" title="拖动可调整各位置对应的颜色"><input type="color" value="#fafafa"></label>
+                <label class="color-swatch" draggable="true" title="拖动可调整各位置对应的颜色"><input type="color" value="#1a1a1a"></label>
+                <label class="color-swatch" draggable="true" title="拖动可调整各位置对应的颜色"><input type="color" value="#333333"></label>
+                <label class="color-swatch" draggable="true" title="拖动可调整各位置对应的颜色"><input type="color" value="#c0392b"></label>
+                <label class="color-swatch" draggable="true" title="拖动可调整各位置对应的颜色"><input type="color" value="#1a1a1a"></label>
+                <label class="color-swatch" draggable="true" title="拖动可调整各位置对应的颜色"><input type="color" value="#555555"></label>
+            </div>
+            <div class="color-role-labels">
+                <span>背景</span>
+                <span>卡片</span>
+                <span>文字</span>
+                <span>强调</span>
+                <span>价格</span>
+                <span>标题</span>
+                <span>副标题</span>
+            </div>
         </div>
+        <button class="btn btn-outline" id="btnPickColor" onclick="pickColorsFromImage()" title="上传一张图片，自动提取图中配色">图片取色</button>
         <div class="toolbar-divider"></div>
 
         <!-- 操作按钮 -->
@@ -1575,13 +1624,7 @@
             const rowWidthValue = document.getElementById('rowWidthValue');
             const borderRadiusSlider = document.getElementById('borderRadiusSlider');
             const borderRadiusValue = document.getElementById('borderRadiusValue');
-            const colorBg = document.getElementById('colorBg');
-            const colorCard = document.getElementById('colorCard');
-            const colorText = document.getElementById('colorText');
-            const colorAccent = document.getElementById('colorAccent');
-            const colorPrice = document.getElementById('colorPrice');
-            const colorTitle = document.getElementById('colorTitle');
-            const colorSubtitle = document.getElementById('colorSubtitle');
+            const colorSwatchInputs = Array.from(document.querySelectorAll('#colorSwatches input[type="color"]'));
             const toast = document.getElementById('toast');
             const btnBgUpload = document.getElementById('btnBgUpload');
             const btnBgClear = document.getElementById('btnBgClear');
@@ -1894,30 +1937,37 @@
                 applyTemplateToDOM(tplName, customColors, colorsOverridden);
             }
 
-            function syncColorPickersToCustom() {
-                colorBg.value = customColors.bg;
-                colorCard.value = customColors.card;
-                colorText.value = customColors.text;
-                colorAccent.value = customColors.accent;
-                colorPrice.value = customColors.price;
-                colorTitle.value = customColors.title;
-                colorSubtitle.value = customColors.subtitle;
+            // 色板位置即角色：第1格=背景、第2格=卡片、第3格=文字……
+            const COLOR_ROLE_KEYS = ['bg', 'card', 'text', 'accent', 'price', 'title', 'subtitle'];
+            const COLOR_ROLE_VARS = {
+                bg: '--poster-bg',
+                card: '--card-bg',
+                text: '--text',
+                accent: '--accent',
+                price: '--price-color',
+                title: '--title-color',
+                subtitle: '--subtitle-color',
+            };
+
+            function getSwatchOrder() {
+                const row = document.getElementById('colorSwatches');
+                return row ? Array.from(row.querySelectorAll('input[type="color"]')) : colorSwatchInputs;
             }
 
-            function applyCustomColor(which, value) {
+            function syncColorPickersToCustom() {
+                getSwatchOrder().forEach((input, i) => {
+                    const value = customColors[COLOR_ROLE_KEYS[i]];
+                    if (value) input.value = value;
+                });
+            }
+
+            function applyCustomColor(index, value) {
+                const which = COLOR_ROLE_KEYS[index];
+                if (!which) return;
                 saveHistory();
                 colorsOverridden = true;
                 customColors[which] = value;
-                const map = {
-                    bg: '--poster-bg',
-                    card: '--card-bg',
-                    text: '--text',
-                    accent: '--accent',
-                    price: '--price-color',
-                    title: '--title-color',
-                    subtitle: '--subtitle-color',
-                };
-                posterContainer.style.setProperty(map[which], value);
+                posterContainer.style.setProperty(COLOR_ROLE_VARS[which], value);
                 autoSave();
             }
 
@@ -2124,6 +2174,63 @@
             }
 
             window.pickColorsFromImage = pickColorsFromImage;
+
+            // ==================== 色板拖动（位置决定角色） ====================
+            // 拖动后按新的左右顺序重新分配角色：第1格=背景、第2格=卡片……
+            function applySwatchOrder() {
+                saveHistory();
+                getSwatchOrder().forEach((input, i) => {
+                    const which = COLOR_ROLE_KEYS[i];
+                    if (which) customColors[which] = input.value;
+                });
+                colorsOverridden = true;
+                applyTemplateToDOM(currentTemplate, customColors, true);
+                syncColorPickersToCustom();
+                autoSave();
+            }
+
+            function initColorSwatchDrag() {
+                const row = document.getElementById('colorSwatches');
+                if (!row) return;
+                let dragging = null;
+
+                colorSwatchInputs.forEach((input) => {
+                    const sw = input.closest('.color-swatch');
+                    if (!sw) return;
+
+                    sw.addEventListener('dragstart', (e) => {
+                        dragging = sw;
+                        sw.classList.add('dragging');
+                        e.dataTransfer.effectAllowed = 'move';
+                        try { e.dataTransfer.setData('text/plain', 'swatch'); } catch (err) {}
+                    });
+
+                    sw.addEventListener('dragend', () => {
+                        sw.classList.remove('dragging');
+                        if (!dragging) return;
+                        dragging = null;
+                        applySwatchOrder();
+                    });
+
+                    sw.addEventListener('dragover', (e) => {
+                        if (!dragging || dragging === sw) return;
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        const rect = sw.getBoundingClientRect();
+                        const after = e.clientX > rect.left + rect.width / 2;
+                        const ref = after ? sw.nextSibling : sw;
+                        if (ref !== dragging) row.insertBefore(dragging, ref);
+                    });
+                });
+
+                // 允许在色板之间的空隙放置
+                row.addEventListener('dragover', (e) => {
+                    if (dragging) e.preventDefault();
+                });
+                row.addEventListener('drop', (e) => {
+                    if (dragging) e.preventDefault();
+                });
+            }
 
             // ==================== 应用尺寸预设 ====================
             function applySizePreset(presetKey) {
@@ -3017,13 +3124,11 @@
                 updateLayout();
                 autoSave(); });
 
-            colorBg.addEventListener('input', () => applyCustomColor('bg', colorBg.value));
-            colorCard.addEventListener('input', () => applyCustomColor('card', colorCard.value));
-            colorText.addEventListener('input', () => applyCustomColor('text', colorText.value));
-            colorAccent.addEventListener('input', () => applyCustomColor('accent', colorAccent.value));
-            colorPrice.addEventListener('input', () => applyCustomColor('price', colorPrice.value));
-            colorTitle.addEventListener('input', () => applyCustomColor('title', colorTitle.value));
-            colorSubtitle.addEventListener('input', () => applyCustomColor('subtitle', colorSubtitle.value));
+            colorSwatchInputs.forEach((input) => {
+                input.addEventListener('input', () => applyCustomColor(getSwatchOrder().indexOf(input), input.value));
+            });
+
+            initColorSwatchDrag();
 
             bgOpacitySlider.addEventListener('input', () => updateBgOpacity(bgOpacitySlider.value));
 
