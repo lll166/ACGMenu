@@ -215,14 +215,19 @@
             letter-spacing: 0.5px;
         }
         .btn-export:hover {
-            box-shadow: 0 6px 24px rgba(102, 126, 234, 0.45);
             transform: translateY(-2px);
         }
         .btn-export-jpg {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #9aa1a9, #63696f);
+        }
+        .btn-export-jpg:hover {
+            box-shadow: 0 6px 24px rgba(99, 105, 111, 0.45);
         }
         .btn-export-png {
-            background: linear-gradient(135deg, #e67e22, #d35400);
+            background: linear-gradient(135deg, #ef5350, #c62828);
+        }
+        .btn-export-png:hover {
+            box-shadow: 0 6px 24px rgba(198, 40, 40, 0.45);
         }
         .btn-icon {
             width: 32px;
@@ -1038,15 +1043,19 @@
     <div class="toolbar" id="toolbar">
         <!-- 模板选择 -->
         <div class="toolbar-group">
-            <label>🎨 模板</label>
+            <label>模板</label>
             <select id="templateSelect" class="toolbar-select">
-                <option value="monochrome">⬛ 黑白灰</option>
-                <option value="sakura">🌸 樱花</option>
-                <option value="starry">✨ 星空</option>
-                <option value="mint">🌿 薄荷</option>
-                <option value="mizuiro">💧 水色</option>
-                <option value="gothic">🦇 哥特</option>
-                <option value="cyber">💜 霓虹</option>
+                <option value="monochrome">黑白灰</option>
+                <option value="sakura">樱花</option>
+                <option value="starry">星空</option>
+                <option value="mint">薄荷</option>
+                <option value="mizuiro">水色</option>
+                <option value="gothic">哥特</option>
+                <option value="cyber">霓虹</option>
+                <option value="lavender">薰衣草</option>
+                <option value="coffee">咖啡奶咖</option>
+                <option value="sunset">日落暖橘</option>
+                <option value="ocean">深海蓝</option>
             </select>
             <button class="btn-icon" id="btnSaveTemplate" onclick="saveCustomTemplate()" title="保存当前配色为自定义模板">💾</button>
         </div>
@@ -1054,19 +1063,19 @@
 
         <!-- 社交媒体尺寸预设 -->
         <div class="toolbar-group">
-            <label>📱 尺寸</label>
+            <label>尺寸</label>
             <select id="sizePresetSelect" class="toolbar-select">
-                <option value="custom">🖐 自定义</option>
-                <option value="insta_sq">📷 IG方形 1080×1080</option>
-                <option value="xhs">📕 小红书 1080×1440</option>
-                <option value="story">📱 Story 1080×1920</option>
-                <option value="a4">🖨 A4打印 2480×3508</option>
+                <option value="custom">自定义</option>
+                <option value="insta_sq">IG方形 1080×1080</option>
+                <option value="xhs">小红书 1080×1440</option>
+                <option value="story">Story 1080×1920</option>
+                <option value="a4">A4打印 2480×3508</option>
             </select>
         </div>
 
         <!-- 卡片比例 -->
         <div class="toolbar-group">
-            <label>📐 比例</label>
+            <label>比例</label>
             <select id="cardRatioSelect" class="toolbar-select">
                 <option value="1">1:1</option>
                 <option value="1.333">4:3</option>
@@ -1083,8 +1092,8 @@
 
         <!-- 背景图片上传 -->
         <div class="toolbar-group">
-            <label>🖼 背景</label>
-            <button class="btn btn-bg-upload" id="btnBgUpload" onclick="triggerBgImageUpload()" title="导入海报背景图片">📁 导入</button>
+            <label>背景</label>
+            <button class="btn btn-bg-upload" id="btnBgUpload" onclick="triggerBgImageUpload()" title="导入海报背景图片">导入</button>
             <button class="btn btn-bg-clear" id="btnBgClear" onclick="clearBgImage()" title="清除背景图片" style="display:none;">✕ 清除</button>
             <input type="range" id="bgOpacitySlider" min="5" max="80" value="15" step="1" title="背景图透明度" style="width:50px;display:none;">
             <span class="opacity-value" id="bgOpacityValue" style="display:none;">15%</span>
@@ -1134,12 +1143,12 @@
 
         <!-- 操作按钮 -->
         <button class="btn btn-primary" onclick="addProduct()">＋ 添加</button>
-        <button class="btn btn-outline" onclick="openBatchImport()">📋 批量导入</button>
-        <button class="btn btn-qr" id="btnQrCode" onclick="openQrModal()" title="生成二维码">🔗 QR码</button>
+        <button class="btn btn-outline" onclick="openBatchImport()">批量导入</button>
+        <button class="btn btn-qr" id="btnQrCode" onclick="openQrModal()" title="生成二维码">QR码</button>
         <button class="btn btn-outline" onclick="resetAll()">↺ 重置</button>
-        <button class="btn btn-export btn-export-jpg" onclick="exportImage('jpg')">📸 JPG</button>
-        <button class="btn btn-export btn-export-png" onclick="exportImage('png')">🖼 PNG</button>
-        <button class="btn btn-outline" onclick="printPoster()" title="打印海报">🖨 打印</button>
+        <button class="btn btn-export btn-export-jpg" onclick="exportImage('jpg')">JPG</button>
+        <button class="btn btn-export btn-export-png" onclick="exportImage('png')">PNG</button>
+        <button class="btn btn-outline" onclick="printPoster()" title="打印海报">打印</button>
     </div>
 
     <!-- ==================== 海报区域 ==================== -->
@@ -1165,11 +1174,11 @@
     <!-- ==================== 模板切换确认弹窗 ==================== -->
     <div class="modal-overlay" id="templateConfirmModal" style="display:none;">
         <div class="modal-dialog">
-            <h3>⚠️ 切换模板</h3>
+            <h3>切换模板</h3>
             <p>切换模板将覆盖自定义配色。<br>是否<strong>保留</strong>当前自定义配色？</p>
             <div class="modal-actions">
-                <button class="btn btn-outline" id="btnKeepColors">🎨 保留配色</button>
-                <button class="btn btn-primary" id="btnOverrideColors">🔄 覆盖配色</button>
+                <button class="btn btn-outline" id="btnKeepColors">保留配色</button>
+                <button class="btn btn-primary" id="btnOverrideColors">覆盖配色</button>
             </div>
         </div>
     </div>
@@ -1177,13 +1186,13 @@
     <!-- ==================== 批量导入弹窗 ==================== -->
     <div class="modal-overlay" id="batchImportModal" style="display:none;">
         <div class="modal-dialog">
-            <h3>📋 批量导入商品</h3>
+            <h3>批量导入商品</h3>
             <p>每行一个商品，使用 <strong>Tab</strong> 或 <strong>逗号</strong> 分隔：</p>
             <textarea id="batchImportText" placeholder="名称&#9;价格&#9;标签&#9;描述&#10;立牌&#9;¥129&#9;新品&#9;15cm/亚克力&#10;徽章&#9;¥99&#9;限定&#10;明信片&#9;¥40&#9;特典&#9;套装"></textarea>
-            <p class="hint-text">💡 格式：<code>名称 [Tab或逗号] 价格 [Tab或逗号] 标签 [Tab或逗号] 描述</code><br>标签用逗号分隔多个（如「限定,预售」），描述可选。</p>
+            <p class="hint-text">格式：<code>名称 [Tab或逗号] 价格 [Tab或逗号] 标签 [Tab或逗号] 描述</code><br>标签用逗号分隔多个（如「限定,预售」），描述可选。</p>
             <div class="modal-actions">
                 <button class="btn btn-outline" onclick="closeBatchImport()">取消</button>
-                <button class="btn btn-primary" onclick="executeBatchImport()">📥 导入</button>
+                <button class="btn btn-primary" onclick="executeBatchImport()">导入</button>
             </div>
         </div>
     </div>
@@ -1191,14 +1200,14 @@
     <!-- ==================== QR码弹窗 ==================== -->
     <div class="modal-overlay" id="qrModal" style="display:none;">
         <div class="modal-dialog">
-            <h3>🔗 生成二维码</h3>
+            <h3>生成二维码</h3>
             <p>输入链接地址，将在海报底部生成二维码：</p>
             <input type="text" id="qrUrlInput" placeholder="https://shop.example.com/your-link" style="margin-bottom:8px;">
-            <p class="hint-text">💡 如网店链接、社交媒体页面、预售链接等</p>
+            <p class="hint-text">如网店链接、社交媒体页面、预售链接等</p>
             <div class="modal-actions">
-                <button class="btn btn-outline" id="btnClearQr" onclick="clearQrCode()" style="display:none;">🗑 清除二维码</button>
+                <button class="btn btn-outline" id="btnClearQr" onclick="clearQrCode()" style="display:none;">清除二维码</button>
                 <button class="btn btn-outline" onclick="closeQrModal()">取消</button>
-                <button class="btn btn-primary" onclick="generateQrCode()">✨ 生成</button>
+                <button class="btn btn-primary" onclick="generateQrCode()">生成</button>
             </div>
         </div>
     </div>
@@ -1439,6 +1448,110 @@
                     fontPrice: '"Consolas","Noto Serif SC",monospace',
                     imageAreaBg: '#111128',
                 },
+                lavender: {
+                    name: '薰衣草',
+                    posterBg: '#f7f4ff',
+                    cardBg: '#ffffff',
+                    text: '#3a2f5a',
+                    textSecondary: '#7a6f9a',
+                    accent: '#a98ede',
+                    border: '#ddd5f5',
+                    priceColor: '#7c5fc4',
+                    cardRadius: '14px',
+                    cardShadow: '0 4px 16px rgba(140,120,200,0.18)',
+                    cardBorder: '2px solid #e6dffa',
+                    tagBg: '#efe9fc',
+                    tagText: '#6f55b8',
+                    badgeBg: '#a98ede',
+                    badgeText: '#fff',
+                    decoColor: '#cdbff0',
+                    titleColor: '#4a3a75',
+                    subtitleColor: '#7a6f9a',
+                    posterBorder: '2px solid #e6dffa',
+                    cornerDeco: '❀',
+                    fontTitle: '"Georgia","Noto Serif SC","KaiTi",serif',
+                    fontBody: '"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif',
+                    fontPrice: '"Georgia","Noto Serif SC",serif',
+                    imageAreaBg: '#f1ecfb',
+                },
+                coffee: {
+                    name: '咖啡奶咖',
+                    posterBg: '#faf6f0',
+                    cardBg: '#ffffff',
+                    text: '#4a3b2e',
+                    textSecondary: '#8a7666',
+                    accent: '#b08968',
+                    border: '#e6d9c9',
+                    priceColor: '#8a5a3b',
+                    cardRadius: '10px',
+                    cardShadow: '0 4px 16px rgba(160,130,100,0.18)',
+                    cardBorder: '2px solid #eadfd0',
+                    tagBg: '#f2e9dc',
+                    tagText: '#7a5232',
+                    badgeBg: '#b08968',
+                    badgeText: '#fff',
+                    decoColor: '#d9c7ae',
+                    titleColor: '#5c4433',
+                    subtitleColor: '#8a7666',
+                    posterBorder: '2px solid #eadfd0',
+                    cornerDeco: '❖',
+                    fontTitle: '"Georgia","Noto Serif SC","SimSun",serif',
+                    fontBody: '"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif',
+                    fontPrice: '"Georgia","Noto Serif SC",serif',
+                    imageAreaBg: '#f5ece0',
+                },
+                sunset: {
+                    name: '日落暖橘',
+                    posterBg: '#fff8f2',
+                    cardBg: '#ffffff',
+                    text: '#4a2f24',
+                    textSecondary: '#96695a',
+                    accent: '#ff8a5b',
+                    border: '#ffd9c4',
+                    priceColor: '#e2542a',
+                    cardRadius: '12px',
+                    cardShadow: '0 4px 18px rgba(255,140,90,0.22)',
+                    cardBorder: '2px solid #ffe2d0',
+                    tagBg: '#ffeadc',
+                    tagText: '#c2451f',
+                    badgeBg: '#ff8a5b',
+                    badgeText: '#fff',
+                    decoColor: '#ffc9ab',
+                    titleColor: '#8a3416',
+                    subtitleColor: '#96695a',
+                    posterBorder: '2px solid #ffe2d0',
+                    cornerDeco: '✺',
+                    fontTitle: '"Georgia","Noto Serif SC","KaiTi",serif',
+                    fontBody: '"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif',
+                    fontPrice: '"Georgia","Noto Serif SC",serif',
+                    imageAreaBg: '#fdf0e6',
+                },
+                ocean: {
+                    name: '深海蓝',
+                    posterBg: '#0b1c30',
+                    cardBg: '#12293f',
+                    text: '#e2ecf5',
+                    textSecondary: '#8fa9c0',
+                    accent: '#4aa3d9',
+                    border: '#1f3d5a',
+                    priceColor: '#6fc3f0',
+                    cardRadius: '8px',
+                    cardShadow: '0 4px 18px rgba(3,12,24,0.55)',
+                    cardBorder: '1px solid #23445f',
+                    tagBg: '#17324a',
+                    tagText: '#7fc6ea',
+                    badgeBg: '#4aa3d9',
+                    badgeText: '#0b1c30',
+                    decoColor: '#2f5471',
+                    titleColor: '#bfe0f5',
+                    subtitleColor: '#8fa9c0',
+                    posterBorder: '2px solid #23445f',
+                    cornerDeco: '❋',
+                    fontTitle: '"Georgia","Noto Serif SC","SimSun",serif',
+                    fontBody: '"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif',
+                    fontPrice: '"Georgia","Noto Serif SC",serif',
+                    imageAreaBg: '#0f2438',
+                },
             };
 
             // ==================== DOM引用 ====================
@@ -1640,7 +1753,7 @@
             function saveCustomTemplatesToStorage(templates) {
                 try {
                     localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(templates));
-                } catch (e) { showToast('⚠️ 保存模板失败'); }
+                } catch (e) { showToast('保存模板失败'); }
             }
 
             // ==================== Toast ====================
@@ -1674,7 +1787,7 @@
                         saveHistory();
                         bgImageDataUrl = ev.target.result;
                         applyBgImage();
-                        showToast('🖼 背景图片已导入');
+                        showToast('背景图片已导入');
                         document.body.removeChild(input);
                     };
                     reader.readAsDataURL(file);
@@ -1692,7 +1805,7 @@
                 posterBgOverlay.style.opacity = bgImageOpacity;
                 posterBgOverlay.classList.add('visible');
                 btnBgUpload.classList.add('has-bg');
-                btnBgUpload.textContent = '📁 更换';
+                btnBgUpload.textContent = '更换';
                 btnBgClear.style.display = 'flex';
                 bgOpacitySlider.style.display = 'inline-block';
                 bgOpacityValue.style.display = 'inline-block';
@@ -1705,7 +1818,7 @@
                 posterBgOverlay.style.opacity = '0';
                 posterBgOverlay.classList.remove('visible');
                 btnBgUpload.classList.remove('has-bg');
-                btnBgUpload.textContent = '📁 导入';
+                btnBgUpload.textContent = '导入';
                 btnBgClear.style.display = 'none';
                 bgOpacitySlider.style.display = 'none';
                 bgOpacityValue.style.display = 'none';
@@ -1715,7 +1828,7 @@
                 saveHistory();
                 bgImageDataUrl = null;
                 clearBgImageDOM();
-                showToast('🗑 背景图片已清除');
+                showToast('背景图片已清除');
             }
 
             function updateBgOpacity(value) {
@@ -2080,7 +2193,7 @@
                         const prod = products.find(p => p.id === productId);
                         if (prod) { prod.image = ev.target.result;
                             renderAllProducts();
-                            showToast('✅ 图片已上传'); }
+                            showToast('图片已上传'); }
                         document.body.removeChild(input);
                     };
                     reader.readAsDataURL(file);
@@ -2101,15 +2214,15 @@
                     description: '' };
                 products.push(newProd);
                 renderAllProducts();
-                showToast('➕ 已添加新商品');
+                showToast('已添加新商品');
             }
 
             function deleteProduct(productId) {
-                if (products.length <= 1) { showToast('⚠️ 至少保留一个商品'); return; }
+                if (products.length <= 1) { showToast('至少保留一个商品'); return; }
                 saveHistory();
                 products = products.filter(p => p.id !== productId);
                 renderAllProducts();
-                showToast('🗑 已删除商品');
+                showToast('已删除商品');
             }
 
             function duplicateProduct(productId) {
@@ -2121,7 +2234,7 @@
                 clone.name = source.name + ' (副本)';
                 products.push(clone);
                 renderAllProducts();
-                showToast('📋 已复制商品');
+                showToast('已复制商品');
             }
 
             function resetAll() {
@@ -2201,7 +2314,7 @@
                     const moved = products.splice(dragSrcIndex, 1)[0];
                     products.splice(targetIndex, 0, moved);
                     renderAllProducts();
-                    showToast('🔄 排序已更新');
+                    showToast('排序已更新');
                 }
                 dragSrcIndex = null;
             }
@@ -2282,7 +2395,7 @@
                         const moved = products.splice(touchData.index, 1)[0];
                         products.splice(targetIndex, 0, moved);
                         renderAllProducts();
-                        showToast('🔄 排序已更新');
+                        showToast('排序已更新');
                     }
                 }
                 touchData = { card: null, clone: null, startX: 0, startY: 0, index: -1, currentTarget: null,
@@ -2303,7 +2416,7 @@
                     saveHistory();
                     applyTemplate(pendingTemplate, true);
                     renderAllProducts();
-                    showToast(`🎨 已切换至「${TEMPLATES[pendingTemplate].name}」模板（保留配色）`);
+                    showToast(`已切换至「${TEMPLATES[pendingTemplate].name}」模板（保留配色）`);
                 }
                 hideTemplateConfirm();
             });
@@ -2312,7 +2425,7 @@
                     saveHistory();
                     applyTemplate(pendingTemplate, false);
                     renderAllProducts();
-                    showToast(`🎨 已切换至「${TEMPLATES[pendingTemplate].name}」模板`);
+                    showToast(`已切换至「${TEMPLATES[pendingTemplate].name}」模板`);
                 }
                 hideTemplateConfirm();
             });
@@ -2329,7 +2442,7 @@
 
             function executeBatchImport() {
                 const raw = batchImportText.value.trim();
-                if (!raw) { showToast('⚠️ 请输入商品数据'); return; }
+                if (!raw) { showToast('请输入商品数据'); return; }
                 const lines = raw.split(/\n/).filter(line => line.trim());
                 const newProducts = [];
                 for (const line of lines) {
@@ -2344,12 +2457,12 @@
                     const description = (parts[3] || '').trim();
                     newProducts.push({ id: nextId++, name, price, image: null, tag, badge: '', description });
                 }
-                if (newProducts.length === 0) { showToast('⚠️ 未识别到有效数据'); return; }
+                if (newProducts.length === 0) { showToast('未识别到有效数据'); return; }
                 saveHistory();
                 products = products.concat(newProducts);
                 closeBatchImport();
                 renderAllProducts();
-                showToast(`📋 已导入 ${newProducts.length} 个商品`);
+                showToast(`已导入 ${newProducts.length} 个商品`);
             }
 
             window.openBatchImport = openBatchImport;
@@ -2370,12 +2483,12 @@
 
             function generateQrCode() {
                 const url = qrUrlInput.value.trim();
-                if (!url) { showToast('⚠️ 请输入链接地址'); return; }
+                if (!url) { showToast('请输入链接地址'); return; }
                 saveHistory();
                 qrCodeData = { url, label: '扫码访问' };
                 renderQrToPoster();
                 closeQrModal();
-                showToast('🔗 二维码已生成');
+                showToast('二维码已生成');
             }
 
             function clearQrCode() {
@@ -2385,7 +2498,7 @@
                 posterQrArea.innerHTML = '';
                 btnQrCode.classList.remove('has-qr');
                 btnClearQr.style.display = 'none';
-                showToast('🗑 二维码已清除');
+                showToast('二维码已清除');
             }
 
             function renderQrToPoster() {
@@ -2448,7 +2561,7 @@
 
             // ==================== 打印 ====================
             function printPoster() {
-                showToast('🖨 正在准备打印...');
+                showToast('正在准备打印...');
                 setTimeout(() => window.print(), 300);
             }
             window.printPoster = printPoster;
@@ -2468,7 +2581,7 @@
                 }
                 saveCustomTemplatesToStorage(customTemplates);
                 refreshTemplateSelect();
-                showToast(`💾 模板「${template.name}」已保存`);
+                showToast(`模板「${template.name}」已保存`);
             }
 
             function refreshTemplateSelect() {
@@ -2489,7 +2602,7 @@
                     customTemplates.forEach(t => {
                         const opt = document.createElement('option');
                         opt.value = 'custom_' + t.name;
-                        opt.textContent = '💾 ' + t.name;
+                        opt.textContent = t.name;
                         templateSelect.appendChild(opt);
                     });
                 }
@@ -2502,7 +2615,7 @@
                 const ext = format === 'png' ? 'png' : 'jpg';
                 const mime = format === 'png' ? 'image/png' : 'image/jpeg';
                 const quality = format === 'png' ? 1.0 : 0.95;
-                showToast(`📸 正在生成${ext.toUpperCase()}图片...`);
+                showToast(`正在生成${ext.toUpperCase()}图片...`);
 
                 // ★ 导出前：隐藏编辑控件（卡片操作按钮、添加占位卡片），保证导出图与预览一致
                 posterContainer.classList.add('exporting');
@@ -2559,10 +2672,10 @@
                     link.download = `anime-merch-poster_${Date.now()}.${ext}`;
                     link.href = canvas.toDataURL(mime, quality);
                     link.click();
-                    showToast(`✅ ${ext.toUpperCase()}导出成功！`);
+                    showToast(`${ext.toUpperCase()}导出成功！`);
                 } catch (err) {
                     console.error('导出失败:', err);
-                    showToast('❌ 导出失败，请重试');
+                    showToast('导出失败，请重试');
                 } finally {
                     // ★ 导出完成后：恢复预览缩放与编辑控件
                     if (savedScaleStyle) posterScale.setAttribute('style', savedScaleStyle);
@@ -2625,7 +2738,7 @@
                         customColors = Object.assign({}, ct.colors);
                         applyTemplateToDOM('monochrome', customColors, true);
                         renderAllProducts();
-                        showToast(`💾 已加载自定义模板「${templateName}」`);
+                        showToast(`已加载自定义模板「${templateName}」`);
                     }
                     return;
                 }
@@ -2635,7 +2748,7 @@
                     saveHistory();
                     applyTemplate(val, false);
                     renderAllProducts();
-                    showToast(`🎨 已切换至「${TEMPLATES[val].name}」模板`);
+                    showToast(`已切换至「${TEMPLATES[val].name}」模板`);
                 }
             });
 
@@ -2658,13 +2771,13 @@
                 const val = sizePresetSelect.value;
                 if (val === 'custom') {
                     currentSizePreset = 'custom';
-                    showToast('🖐 已切换为自定义尺寸');
+                    showToast('已切换为自定义尺寸');
                     return;
                 }
                 saveHistory();
                 applySizePreset(val);
                 renderAllProducts();
-                showToast(`📱 已切换至「${SIZE_PRESETS[val].name}」尺寸`);
+                showToast(`已切换至「${SIZE_PRESETS[val].name}」尺寸`);
             });
 
             cardRatioSelect.addEventListener('change', () => {
@@ -2675,7 +2788,7 @@
                 sizePresetSelect.value = 'custom';
                 renderAllProducts();
                 autoSave();
-                showToast('📐 卡片比例已更新');
+                showToast('卡片比例已更新');
             });
 
             columnsSlider.addEventListener('input', () => {
@@ -2791,7 +2904,7 @@
 
                         historyLocked = false;
                         updateUndoRedoButtons();
-                        showToast('📂 已恢复上次编辑 | Ctrl+S导出 | Ctrl+Z/Y撤销');
+                        showToast('已恢复上次编辑 | Ctrl+S导出 | Ctrl+Z/Y撤销');
                         return;
                     } catch (e) {
                         console.warn('恢复状态失败:', e);
@@ -2805,7 +2918,7 @@
                 clearBgImageDOM();
                 fitPosterScale();
                 updateUndoRedoButtons();
-                showToast('✨ 海报生成器就绪 | Ctrl+S导出 | Ctrl+P打印');
+                showToast('海报生成器就绪 | Ctrl+S导出 | Ctrl+P打印');
             }
 
             init();
