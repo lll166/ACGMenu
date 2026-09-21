@@ -512,6 +512,10 @@
             height: 80px !important;
             border-radius: 4px;
         }
+        .poster-qr-area .qr-container img {
+            object-fit: contain;
+            background: #ffffff;
+        }
         .poster-qr-area .qr-label {
             font-size: 9px;
             color: var(--text-secondary);
@@ -955,6 +959,21 @@
             margin-top: 4px;
             line-height: 1.5;
         }
+        .modal-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 16px 0;
+            color: #bbb;
+            font-size: 12px;
+        }
+        .modal-divider::before,
+        .modal-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e5e5e5;
+        }
 
         /* ========== Toast ========== */
         .toast {
@@ -1254,6 +1273,9 @@
             <p>输入链接地址，将在海报底部生成二维码：</p>
             <input type="text" id="qrUrlInput" placeholder="https://shop.example.com/your-link" style="margin-bottom:8px;">
             <p class="hint-text">如网店链接、社交媒体页面、预售链接等</p>
+            <div class="modal-divider"><span>或</span></div>
+            <button class="btn btn-outline" id="btnQrImage" onclick="uploadQrImage()" style="width:100%;justify-content:center;">上传二维码图片</button>
+            <p class="hint-text">直接上传已有的二维码图片，如微信、支付宝收款码</p>
             <div class="modal-actions">
                 <button class="btn btn-outline" id="btnClearQr" onclick="clearQrCode()" style="display:none;">清除二维码</button>
                 <button class="btn btn-outline" onclick="closeQrModal()">取消</button>
@@ -1297,7 +1319,7 @@
             let colorsOverridden = false;
             let bgImageDataUrl = null;
             let bgImageOpacity = 0.15;
-            let qrCodeData = { url: '', label: '' };
+            let qrCodeData = { url: '', label: '', image: '' };
 
             // ==================== 社交媒体尺寸预设 ====================
             const SIZE_PRESETS = {
@@ -1634,6 +1656,7 @@
             const btnRedo = document.getElementById('btnRedo');
             const btnQrCode = document.getElementById('btnQrCode');
             const btnClearQr = document.getElementById('btnClearQr');
+            const btnQrImage = document.getElementById('btnQrImage');
             const templateConfirmModal = document.getElementById('templateConfirmModal');
             const batchImportModal = document.getElementById('batchImportModal');
             const batchImportText = document.getElementById('batchImportText');
@@ -1677,7 +1700,7 @@
                 colorsOverridden = state.colorsOverridden;
                 bgImageDataUrl = state.bgImageDataUrl;
                 bgImageOpacity = state.bgImageOpacity;
-                qrCodeData = Object.assign({}, state.qrCodeData || { url: '', label: '' });
+                qrCodeData = Object.assign({ url: '', label: '', image: '' }, state.qrCodeData || {});
                 posterTitle.textContent = state.titleText;
                 posterSubtitle.textContent = state.subtitleText;
 
@@ -1701,7 +1724,7 @@
                 } else {
                     clearBgImageDOM();
                 }
-                if (qrCodeData.url) {
+                if (hasQrContent()) {
                     renderQrToPoster();
                 }
                 updateUndoRedoButtons();
@@ -2421,7 +2444,7 @@
 
                 if (bgImageDataUrl) applyBgImage();
                 updateLayout();
-                if (qrCodeData.url) renderQrToPoster();
+                if (qrCodeData.url || qrCodeData.image) renderQrToPoster();
             }
 
             function escapeHTML(str) {
@@ -2576,7 +2599,7 @@
                 posterSubtitle.textContent = '— 这里是小标题 —';
                 bgImageDataUrl = null;
                 bgImageOpacity = 0.15;
-                qrCodeData = { url: '', label: '' };
+                qrCodeData = { url: '', label: '', image: '' };
                 clearBgImageDOM();
                 posterQrArea.style.display = 'none';
                 posterQrArea.innerHTML = '';
@@ -2783,11 +2806,13 @@
             batchImportModal.addEventListener('click', (e) => { if (e.target === batchImportModal) closeBatchImport(); });
 
             // ==================== 二维码弹窗 ====================
+            function hasQrContent() { return !!(qrCodeData.url || qrCodeData.image); }
+
             function openQrModal() {
                 qrUrlInput.value = qrCodeData.url || '';
                 qrModal.style.display = 'flex';
-                if (qrCodeData.url) btnClearQr.style.display = 'flex';
-                else btnClearQr.style.display = 'none';
+                btnClearQr.style.display = hasQrContent() ? 'flex' : 'none';
+                btnQrImage.textContent = qrCodeData.image ? '更换二维码图片' : '上传二维码图片';
                 setTimeout(() => qrUrlInput.focus(), 150);
             }
 
@@ -2797,15 +2822,45 @@
                 const url = qrUrlInput.value.trim();
                 if (!url) { showToast('请输入链接地址'); return; }
                 saveHistory();
-                qrCodeData = { url, label: '扫码访问' };
+                qrCodeData = { url, label: '扫码访问', image: '' };
                 renderQrToPoster();
                 closeQrModal();
                 showToast('二维码已生成');
             }
 
+            function uploadQrImage() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.style.display = 'none';
+                document.body.appendChild(input);
+                let handled = false;
+                input.addEventListener('change', (e) => {
+                    handled = true;
+                    const file = e.target.files[0];
+                    if (!file) { document.body.removeChild(input); return; }
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        saveHistory();
+                        qrCodeData = { url: '', label: qrCodeData.label || '扫码访问', image: ev.target.result };
+                        renderQrToPoster();
+                        closeQrModal();
+                        showToast('二维码图片已上传');
+                        document.body.removeChild(input);
+                    };
+                    reader.onerror = () => { showToast('图片读取失败'); document.body.removeChild(input); };
+                    reader.readAsDataURL(file);
+                });
+                input.addEventListener('cancel', () => { handled = true;
+                    document.body.removeChild(input); });
+                setTimeout(() => { if (!handled && document.body.contains(input)) document.body.removeChild(
+                        input); }, 30000);
+                input.click();
+            }
+
             function clearQrCode() {
                 saveHistory();
-                qrCodeData = { url: '', label: '' };
+                qrCodeData = { url: '', label: '', image: '' };
                 posterQrArea.style.display = 'none';
                 posterQrArea.innerHTML = '';
                 btnQrCode.classList.remove('has-qr');
@@ -2814,10 +2869,13 @@
             }
 
             function renderQrToPoster() {
-                if (!qrCodeData.url) return;
+                if (!hasQrContent()) return;
                 posterQrArea.style.display = 'flex';
+                const codeHtml = qrCodeData.image ?
+                    '<img src="' + qrCodeData.image + '" alt="二维码">' :
+                    '<div id="qrCodeTarget"></div>';
                 posterQrArea.innerHTML =
-                    '<div class="qr-container"><div id="qrCodeTarget"></div><span class="qr-label" title="点击编辑标签">' +
+                    '<div class="qr-container">' + codeHtml + '<span class="qr-label" title="点击编辑标签">' +
                     escapeHTML(qrCodeData.label) + '</span></div>';
 
                 const target = document.getElementById('qrCodeTarget');
@@ -2868,6 +2926,7 @@
             window.openQrModal = openQrModal;
             window.closeQrModal = closeQrModal;
             window.generateQrCode = generateQrCode;
+            window.uploadQrImage = uploadQrImage;
             window.clearQrCode = clearQrCode;
             qrModal.addEventListener('click', (e) => { if (e.target === qrModal) closeQrModal(); });
 
@@ -3169,7 +3228,7 @@
                         colorsOverridden = savedState.colorsOverridden || false;
                         bgImageDataUrl = savedState.bgImageDataUrl || null;
                         bgImageOpacity = savedState.bgImageOpacity || 0.15;
-                        qrCodeData = Object.assign({}, savedState.qrCodeData || { url: '', label: '' });
+                        qrCodeData = Object.assign({ url: '', label: '', image: '' }, savedState.qrCodeData || {});
                         if (savedState.titleText) posterTitle.textContent = savedState.titleText;
                         if (savedState.subtitleText) posterSubtitle.textContent = savedState.subtitleText;
 
@@ -3209,7 +3268,7 @@
                         renderAllProducts();
                         if (bgImageDataUrl) applyBgImage();
                         else clearBgImageDOM();
-                        if (qrCodeData.url) renderQrToPoster();
+                        if (qrCodeData.url || qrCodeData.image) renderQrToPoster();
                         fitPosterScale();
 
                         historyLocked = false;
