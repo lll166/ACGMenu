@@ -1138,13 +1138,14 @@
             <input type="color" id="colorPrice" value="#c0392b" title="价格">
             <input type="color" id="colorTitle" value="#1a1a1a" title="标题">
             <input type="color" id="colorSubtitle" value="#555555" title="副标题">
+            <button class="btn btn-outline" id="btnPickColor" onclick="pickColorsFromImage()" title="上传一张图片，自动提取图中配色">图片取色</button>
         </div>
         <div class="toolbar-divider"></div>
 
         <!-- 操作按钮 -->
         <button class="btn btn-primary" onclick="addProduct()">＋ 添加</button>
         <button class="btn btn-outline" onclick="openBatchImport()">批量导入</button>
-        <button class="btn btn-qr" id="btnQrCode" onclick="openQrModal()" title="生成二维码">QR码</button>
+        <button class="btn btn-qr" id="btnQrCode" onclick="openQrModal()" title="生成二维码">二维码</button>
         <button class="btn btn-outline" onclick="resetAll()">↺ 重置</button>
         <button class="btn btn-export btn-export-jpg" onclick="exportImage('jpg')">JPG</button>
         <button class="btn btn-export btn-export-png" onclick="exportImage('png')">PNG</button>
@@ -1919,6 +1920,210 @@
                 posterContainer.style.setProperty(map[which], value);
                 autoSave();
             }
+
+            // ==================== 图片自动取色 ====================
+            function hexFromRgb(r, g, b) {
+                const to2 = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
+                return '#' + to2(r) + to2(g) + to2(b);
+            }
+
+            function rgbFromHsl(h, s, l) {
+                h = ((h % 360) + 360) % 360;
+                s = Math.max(0, Math.min(1, s));
+                l = Math.max(0, Math.min(1, l));
+                const c = (1 - Math.abs(2 * l - 1)) * s;
+                const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+                const m = l - c / 2;
+                let r = 0,
+                    g = 0,
+                    b = 0;
+                if (h < 60) { r = c;
+                    g = x; } else if (h < 120) { r = x;
+                    g = c; } else if (h < 180) { g = c;
+                    b = x; } else if (h < 240) { g = x;
+                    b = c; } else if (h < 300) { r = x;
+                    b = c; } else { r = c;
+                    b = x; }
+                return { r: (r + m) * 255, g: (g + m) * 255, b: (b + m) * 255 };
+            }
+
+            function hslFromRgb(r, g, b) {
+                r /= 255;
+                g /= 255;
+                b /= 255;
+                const max = Math.max(r, g, b),
+                    min = Math.min(r, g, b);
+                const l = (max + min) / 2;
+                const d = max - min;
+                let h = 0,
+                    s = 0;
+                if (d > 0) {
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+                    else if (max === g) h = (b - r) / d + 2;
+                    else h = (r - g) / d + 4;
+                    h *= 60;
+                }
+                return { h: h, s: s, l: l };
+            }
+
+            function hslToHex(h, s, l) {
+                const c = rgbFromHsl(h, s, l);
+                return hexFromRgb(c.r, c.g, c.b);
+            }
+
+            function pixelLuminance(r, g, b) {
+                const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+                return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+            }
+
+            // 采样并量化图片像素，得到按面积排序的主色列表
+            function extractImagePalette(img) {
+                if (!img.width || !img.height) return null;
+                const maxSide = 120;
+                const scale = Math.min(maxSide / img.width, maxSide / img.height, 1);
+                const cw = Math.max(1, Math.round(img.width * scale));
+                const ch = Math.max(1, Math.round(img.height * scale));
+                const canvas = document.createElement('canvas');
+                canvas.width = cw;
+                canvas.height = ch;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, cw, ch);
+                const data = ctx.getImageData(0, 0, cw, ch).data;
+
+                const buckets = {};
+                let lumSum = 0,
+                    total = 0;
+                for (let i = 0; i < data.length; i += 4) {
+                    if (data[i + 3] < 128) continue;
+                    const r = data[i],
+                        g = data[i + 1],
+                        b = data[i + 2];
+                    lumSum += pixelLuminance(r, g, b);
+                    total++;
+                    const key = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4);
+                    const bk = buckets[key] || (buckets[key] = { r: 0, g: 0, b: 0, n: 0 });
+                    bk.r += r;
+                    bk.g += g;
+                    bk.b += b;
+                    bk.n++;
+                }
+                if (!total) return null;
+                const list = Object.keys(buckets).map((k) => {
+                    const bk = buckets[k];
+                    const r = bk.r / bk.n,
+                        g = bk.g / bk.n,
+                        b = bk.b / bk.n;
+                    return { r: r, g: g, b: b, n: bk.n, hsl: hslFromRgb(r, g, b) };
+                }).sort((a, b) => b.n - a.n);
+                return { list: list, total: total, avgLum: lumSum / total };
+            }
+
+            // 由图片主色推导出一整套海报配色
+            function buildPaletteFromImage(img) {
+                const res = extractImagePalette(img);
+                if (!res || !res.list.length) return null;
+                const dark = res.avgLum < 0.42;
+
+                // 综合出现面积与鲜艳度，选出最具代表性的主色
+                let vibrant = res.list[0];
+                let best = -1;
+                res.list.slice(0, 14).forEach((c) => {
+                    const mid = c.hsl.l > 0.12 && c.hsl.l < 0.92 ? 1 : 0.25;
+                    const score = c.hsl.s * mid * (0.35 + c.n / res.total);
+                    if (score > best) { best = score;
+                        vibrant = c; }
+                });
+
+                if (vibrant.hsl.s < 0.08) {
+                    // 近灰阶图片：沿用中性配色，避免出现突兀的色相
+                    if (dark) return { bg: '#1b1b1d', card: '#26262a', text: '#f0f0f2', accent: '#b8b8bf', price: '#dcdce2', title: '#ffffff', subtitle: '#b4b4bb' };
+                    return { bg: '#f6f6f7', card: '#ffffff', text: '#1a1a1a', accent: '#4a4a4f', price: '#2f2f33', title: '#141414', subtitle: '#5c5c63' };
+                }
+
+                const hue = vibrant.hsl.h;
+                const sat = Math.max(vibrant.hsl.s, 0.32);
+                if (dark) {
+                    return {
+                        bg: hslToHex(hue, sat * 0.45, 0.11),
+                        card: hslToHex(hue, sat * 0.38, 0.17),
+                        text: hslToHex(hue, Math.min(sat * 0.25, 0.22), 0.94),
+                        accent: hslToHex(hue, sat, 0.62),
+                        price: hslToHex(hue, sat, 0.68),
+                        title: hslToHex(hue, Math.min(sat * 0.3, 0.3), 0.98),
+                        subtitle: hslToHex(hue, Math.min(sat * 0.28, 0.28), 0.72),
+                    };
+                }
+                return {
+                    bg: hslToHex(hue, Math.min(sat * 0.5, 0.32), 0.96),
+                    card: hslToHex(hue, Math.min(sat * 0.4, 0.24), 0.99),
+                    text: hslToHex(hue, Math.min(sat * 0.45, 0.4), 0.18),
+                    accent: hslToHex(hue, sat, 0.42),
+                    price: hslToHex(hue, sat, 0.46),
+                    title: hslToHex(hue, Math.min(sat * 0.5, 0.45), 0.15),
+                    subtitle: hslToHex(hue, Math.min(sat * 0.4, 0.35), 0.42),
+                };
+            }
+
+            function applyPalette(palette) {
+                saveHistory();
+                colorsOverridden = true;
+                customColors.bg = palette.bg;
+                customColors.card = palette.card;
+                customColors.text = palette.text;
+                customColors.accent = palette.accent;
+                customColors.price = palette.price;
+                customColors.title = palette.title;
+                customColors.subtitle = palette.subtitle;
+                applyTemplateToDOM(currentTemplate, customColors, true);
+                syncColorPickersToCustom();
+                autoSave();
+            }
+
+            function pickColorsFromImage() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.style.display = 'none';
+                document.body.appendChild(input);
+                let handled = false;
+                input.addEventListener('change', (e) => {
+                    handled = true;
+                    const file = e.target.files[0];
+                    if (!file) { document.body.removeChild(input); return; }
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const palette = buildPaletteFromImage(img);
+                            if (palette) {
+                                applyPalette(palette);
+                                showToast('已根据图片切换配色');
+                            } else {
+                                showToast('未能从图片中提取配色');
+                            }
+                            document.body.removeChild(input);
+                        };
+                        img.onerror = () => {
+                            showToast('图片读取失败');
+                            document.body.removeChild(input);
+                        };
+                        img.src = ev.target.result;
+                    };
+                    reader.onerror = () => {
+                        showToast('图片读取失败');
+                        document.body.removeChild(input);
+                    };
+                    reader.readAsDataURL(file);
+                });
+                input.addEventListener('cancel', () => { handled = true;
+                    document.body.removeChild(input); });
+                setTimeout(() => { if (!handled && document.body.contains(input)) document.body.removeChild(
+                        input); }, 30000);
+                input.click();
+            }
+
+            window.pickColorsFromImage = pickColorsFromImage;
 
             // ==================== 应用尺寸预设 ====================
             function applySizePreset(presetKey) {
